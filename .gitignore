@@ -1,0 +1,17 @@
+# Node dependencies
+node_modules/
+
+# Local database and runtime logs
+school.db
+*.log
+server.out.log
+server.err.log
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
