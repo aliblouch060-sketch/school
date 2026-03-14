@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Scholar Kids School | Staff Portal</title>
+    <meta name="theme-color" content="#0d5a4a" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon-192.png" sizes="192x192" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-backdrop"></div>
+
+    <div class="app-shell">
+      <header class="portal-top" id="overview">
+        <div class="top-strip">
+          <p>Government Style Education Services</p>
+          <p>Start School Digital Campus</p>
+        </div>
+        <div class="portal-brand-wrap">
+          <div class="brand">
+            <div class="brand-badge">
+              <img src="ska-logo.svg" alt="The Scholar Kids Academy" class="brand-logo" />
+            </div>
+            <div>
+              <p class="brand-subline">National Education Portal Style</p>
+              <h1 class="brand-title">The Scholar Kids School</h1>
+              <p class="brand-sub">Admissions, Attendance, Results, Fees, Notices and Timetable</p>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button id="installAppBtn" class="install-btn" type="button" hidden>Install App</button>
+            <p class="support-line">Help Desk: #03111652325</p>
+          </div>
+        </div>
+        <div class="portal-menu">
+          <button type="button" class="portal-menu-btn is-active" data-portal-page-btn="home">Home</button>
+          <button type="button" class="portal-menu-btn" data-portal-page-btn="services">Services</button>
+          <button type="button" class="portal-menu-btn" data-portal-page-btn="notices">School Notices</button>
+          <button type="button" class="portal-menu-btn" data-portal-page-btn="portal">Staff Login</button>
+        </div>
+      </header>
+
+      <section class="notice-ticker-wrap" aria-label="Latest notices">
+        <p class="notice-label">Latest Notices</p>
+        <div class="notice-ticker" id="publicNoticeTicker">
+          <div class="notice-ticker-track" id="publicNoticeTickerTrack">
+            <span class="ticker-item">Notices will appear here after records are available.</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="content-layout">
+        <aside class="side-panel">
+          <p class="nav-title">Portal Pages</p>
+          <div class="public-nav-grid">
+            <button type="button" class="public-nav-btn is-active" data-portal-page-btn="home">Portal Home</button>
+            <button type="button" class="public-nav-btn" data-portal-page-btn="services">Services</button>
+            <button type="button" class="public-nav-btn" data-portal-page-btn="notices">Notice Board</button>
+            <button type="button" class="public-nav-btn" data-portal-page-btn="portal">Staff Login</button>
+          </div>
+
+          <p class="nav-title nav-top-space">School Modules</p>
+          <nav class="side-nav">
+            <a href="#workspace">Class Workspace</a>
+            <a href="#access">Access</a>
+            <a href="#admissions">Admissions</a>
+            <a href="#attendance">Attendance</a>
+            <a href="#results">Results</a>
+            <a href="#fees">Fees</a>
+            <a href="#voucher">Vouchers</a>
+            <a href="#notices">Notices</a>
+            <a href="#timetable">Timetable</a>
+            <a href="#records">Records</a>
+          </nav>
+
+          <div class="side-card">
+            <p class="side-card-title">Portal Note</p>
+            <p>This system is optimized for school staff login, mobile install, and private day-to-day operations.</p>
+          </div>
+        </aside>
+
+        <div class="main-panel">
+          <div class="portal-page is-active" data-portal-page="home">
+            <section class="hero-panel">
+              <p class="eyebrow">Single Window Education System</p>
+              <h2>Welcome to The Scholar Kids Staff Portal</h2>
+              <p class="lead">
+                Teachers aur school staff yahan se login karke admissions, attendance, results, fees, notices aur timetable ka kaam
+                mobile ya computer dono par kar sakte hain.
+              </p>
+              <div class="cta-row">
+                <button type="button" data-portal-page-btn="portal">Open Staff Login</button>
+                <button type="button" class="secondary-btn" data-portal-page-btn="notices">View School Notices</button>
+              </div>
+            </section>
+
+            <section>
+              <h2>Quick Services</h2>
+              <div class="service-grid">
+                <article class="service-card">
+                  <h3>Admissions</h3>
+                  <p>Digital admission records with parent, student and class details.</p>
+                </article>
+                <article class="service-card">
+                  <h3>Attendance Tracking</h3>
+                  <p>Daily attendance with class filters and date-wise record lookup.</p>
+                </article>
+                <article class="service-card">
+                  <h3>Results Management</h3>
+                  <p>Exam and subject wise results with grades and class record view.</p>
+                </article>
+                <article class="service-card">
+                  <h3>Fee & Vouchers</h3>
+                  <p>Fee records, auto generation, and printable student vouchers.</p>
+                </article>
+              </div>
+            </section>
+
+            <section class="home-highlight">
+              <h2>School Information</h2>
+              <div class="info-strip-grid">
+                <article class="info-strip">
+                  <h3>Admissions Open</h3>
+                  <p>Parents can contact office for admissions in Play Group to Class 10.</p>
+                </article>
+                <article class="info-strip">
+                  <h3>School Timings</h3>
+                  <p>Mon-Sat morning shift schedule is available on portal timetable module.</p>
+                </article>
+                <article class="info-strip">
+                  <h3>Fee Reminders</h3>
+                  <p>Monthly fee voucher and due details are generated from the fee module.</p>
+                </article>
+              </div>
+            </section>
+          </div>
+
+          <div class="portal-page" data-portal-page="services">
+            <section>
+              <h2>School Portal Services</h2>
+              <p class="helper-text">
+                Ye portal school staff ke liye tayar kiya gaya hai. Full operations authorized login ke baad available hotay hain.
+              </p>
+              <div class="service-grid">
+                <article class="service-card">
+                  <h3>Student Records</h3>
+                  <p>Admission number, class placement, B-Form details and contact records.</p>
+                </article>
+                <article class="service-card">
+                  <h3>Academic Monitoring</h3>
+                  <p>Attendance and result modules with teacher/admin access controls.</p>
+                </article>
+                <article class="service-card">
+                  <h3>Financial Management</h3>
+                  <p>Class fee setup, due calculation, payments and voucher workflows.</p>
+                </article>
+                <article class="service-card">
+                  <h3>Communication</h3>
+                  <p>Notice board and timetable for school-wide structured updates.</p>
+                </article>
+              </div>
+            </section>
+          </div>
+
+          <div class="portal-page" data-portal-page="notices">
+            <section>
+              <h2>School Notice Board</h2>
+              <p class="helper-text">Latest school updates aur instructions yahan show hongi.</p>
+              <ul id="publicNoticeList" class="public-notice-list">
+                <li>No public notices available yet.</li>
+              </ul>
+            </section>
+          </div>
+
+          <div class="portal-page" data-portal-page="portal">
+            <section class="hero-panel">
+              <p class="eyebrow">Private School Operations Area</p>
+              <h2>Staff Operations Dashboard</h2>
+              <p class="lead">
+                Login ke baad teachers aur admin complete school modules access kar sakte hain including admissions, attendance,
+                results, fees and timetable.
+              </p>
+            </section>
+
+            <section class="dashboard requires-auth" id="dashboardCards">
+              <div class="card">
+                <h3>Total Students</h3>
+                <p id="totalStudents">0</p>
+              </div>
+              <div class="card">
+                <h3>Today Present</h3>
+                <p id="todayPresent">0</p>
+              </div>
+              <div class="card">
+                <h3>Total Fee Due</h3>
+                <p id="totalDue">0</p>
+              </div>
+              <div class="card">
+                <h3>Result Entries</h3>
+                <p id="resultEntries">0</p>
+              </div>
+              <div class="card">
+                <h3>Notices</h3>
+                <p id="noticeCount">0</p>
+              </div>
+              <div class="card">
+                <h3>Timetable Slots</h3>
+                <p id="timetableCount">0</p>
+              </div>
+            </section>
+
+            <main>
+              <section class="requires-auth" id="workspace">
+                <h2>Class Workspace (Column View)</h2>
+                <p class="helper-text">Class select karein. Attendance, Result aur Fee forms mein class auto-set ho jayegi.</p>
+                <div id="classColumns" class="class-columns"></div>
+              </section>
+
+              <section id="access">
+                <h2>0) Access</h2>
+                <form id="loginForm" class="grid-form">
+                  <input type="text" name="username" placeholder="Username" required />
+                  <input type="password" name="password" placeholder="Password" required />
+                  <button type="submit">Login</button>
+                </form>
+
+                <div class="filter-bar single-line auth-strip">
+                  <input id="currentUser" value="Not logged in" readonly />
+                  <input id="authMode" value="Please login" readonly />
+                  <button id="logoutBtn" type="button">Logout</button>
+                </div>
+
+                <form id="userForm" class="grid-form admin-only requires-auth">
+                  <input type="text" name="username" placeholder="New Teacher Username" required />
+                  <input type="password" name="password" placeholder="Password (min 6 chars)" required />
+                  <select name="role" required>
+                    <option value="Teacher">Teacher</option>
+                    <option value="Admin">Admin</option>
+                  </select>
+                  <button type="submit">Create User</button>
+                </form>
+                <div id="authMsg" class="msg"></div>
+              </section>
+
+              <section class="admin-only requires-auth" id="admissions">
+                <h2>1) Admission Module</h2>
+                <form id="admissionForm" class="grid-form">
+                  <input type="text" name="fullName" placeholder="Student Full Name" required />
+                  <select name="className" required></select>
+                  <input type="text" name="section" placeholder="Section (A/B)" />
+                  <select name="gender">
+                    <option value="">Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <input type="date" name="dob" />
+                  <input type="text" name="bFormNo" placeholder="B-Form Number" />
+                  <input type="file" id="bFormPhoto" accept="image/*" />
+                  <button type="button" id="extractFromPhotoBtn">Auto Fill from B-Form Photo</button>
+                  <input type="text" name="parentName" placeholder="Parent Name" />
+                  <input type="text" name="phone" placeholder="Phone Number" />
+                  <input type="date" name="admissionDate" required />
+                  <textarea name="address" placeholder="Address"></textarea>
+                  <button type="submit">Save Admission</button>
+                  <button type="button" id="cancelAdmissionEditBtn" class="secondary-btn" hidden>Cancel Edit</button>
+                </form>
+                <div id="admissionMsg" class="msg"></div>
+              </section>
+
+              <section class="requires-auth" id="attendance">
+                <h2>2) Attendance Module</h2>
+                <form id="attendanceForm" class="grid-form">
+                  <select name="className" id="attendanceClass" required></select>
+                  <select name="studentId" id="attendanceStudent" required></select>
+                  <input type="date" name="attendanceDate" required />
+                  <select name="status" required>
+                    <option value="Present">Present</option>
+                    <option value="Absent">Absent</option>
+                    <option value="Late">Late</option>
+                  </select>
+                  <input type="text" name="remarks" placeholder="Remarks" />
+                  <button type="submit">Mark Attendance</button>
+                  <button type="button" id="cancelAttendanceEditBtn" class="secondary-btn" hidden>Cancel Edit</button>
+                </form>
+                <div id="attendanceMsg" class="msg"></div>
+                <div class="filter-bar single-line">
+                  <select id="attendanceClassFilter"></select>
+                  <input type="date" id="attendanceDateFilter" />
+                  <button type="button" id="loadAttendanceBtn">Load Class Attendance</button>
+                </div>
+                <table id="attendanceTable">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Class</th>
+                      <th>Student</th>
+                      <th>Status</th>
+                      <th>Remarks</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </section>
+
+              <section class="requires-auth" id="results">
+                <h2>3) Result Record Module</h2>
+                <form id="resultForm" class="grid-form">
+                  <select name="className" id="resultClass" required></select>
+                  <select name="studentId" id="resultStudent" required></select>
+                  <input type="text" name="examName" placeholder="Exam Name" required />
+                  <input type="text" name="subject" placeholder="Subject" required />
+                  <input type="number" name="maxMarks" placeholder="Max Marks" required />
+                  <input type="number" name="obtainedMarks" placeholder="Obtained Marks" required />
+                  <input type="text" name="remarks" placeholder="Remarks" />
+                  <button type="submit">Save Result</button>
+                  <button type="button" id="cancelResultEditBtn" class="secondary-btn" hidden>Cancel Edit</button>
+                </form>
+                <div id="resultMsg" class="msg"></div>
+                <div class="filter-bar single-line">
+                  <select id="resultClassFilter"></select>
+                  <input type="text" id="resultExamFilter" placeholder="Filter Exam Name (optional)" />
+                  <button type="button" id="loadResultBtn">Load Class Results</button>
+                </div>
+                <table id="resultsTable">
+                  <thead>
+                    <tr>
+                      <th>Class</th>
+                      <th>Student</th>
+                      <th>Exam</th>
+                      <th>Subject</th>
+                      <th>Marks</th>
+                      <th>Grade</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </section>
+
+              <section class="admin-only requires-auth" id="fees">
+                <h2>4) Fee Record Module</h2>
+                <form id="feeForm" class="grid-form">
+                  <select name="className" id="feeClass" required></select>
+                  <select name="studentId" id="feeStudent" required></select>
+                  <input type="month" name="feeMonth" placeholder="Fee Month (optional)" />
+                  <input type="number" step="0.01" id="feeTotalAmount" name="totalAmount" placeholder="Auto Total Amount" readonly />
+                  <input type="number" step="0.01" name="paidAmount" placeholder="Paid Amount" required />
+                  <input type="date" name="paymentDate" />
+                  <input type="text" name="paymentMode" placeholder="Payment Mode (Cash/Online)" />
+                  <input type="text" name="remarks" placeholder="Remarks" />
+                  <button type="submit">Save Fee Record</button>
+                  <button type="button" id="cancelFeeEditBtn" class="secondary-btn" hidden>Cancel Edit</button>
+                  <button type="button" id="autoGenerateFeeBtn">Auto Generate Class Fee</button>
+                </form>
+                <div id="feeMsg" class="msg"></div>
+              </section>
+
+              <section class="admin-only requires-auth" id="voucher">
+                <h2>4-B) Student Fee Voucher</h2>
+                <p class="helper-text">Teesre box mein Fee Month select karein (month picker). Record mojood hoga to voucher auto-generate ho jayega.</p>
+                <form id="voucherForm" class="grid-form">
+                  <select name="className" id="voucherClass" required></select>
+                  <select name="studentId" id="voucherStudent" required></select>
+                  <input type="month" name="feeMonth" title="Select Fee Month" placeholder="Select Fee Month" required />
+                  <button type="submit">Generate Voucher</button>
+                </form>
+                <div class="voucher-actions">
+                  <button type="button" id="saveVoucherBtn" disabled>Save File</button>
+                  <button type="button" id="printVoucherBtn" disabled>Print Voucher</button>
+                </div>
+                <div id="voucherMsg" class="msg"></div>
+                <div id="voucherPreview" class="voucher-preview"></div>
+              </section>
+
+              <section class="admin-only requires-auth" id="notices">
+                <h2>5) Notice Board Module</h2>
+                <form id="noticeForm" class="grid-form">
+                  <input type="text" name="title" placeholder="Notice Title" required />
+                  <select name="audience" required>
+                    <option value="All">All</option>
+                    <option value="Students">Students</option>
+                    <option value="Teachers">Teachers</option>
+                    <option value="Parents">Parents</option>
+                  </select>
+                  <input type="date" name="publishDate" required />
+                  <textarea name="body" placeholder="Notice details" required></textarea>
+                  <button type="submit">Publish Notice</button>
+                  <button type="button" id="cancelNoticeEditBtn" class="secondary-btn" hidden>Cancel Edit</button>
+                </form>
+                <div id="noticeMsg" class="msg"></div>
+              </section>
+
+              <section class="admin-only requires-auth" id="timetable">
+                <h2>6) Timetable Module</h2>
+                <form id="timetableForm" class="grid-form">
+                  <select name="className" required></select>
+                  <input type="text" name="section" placeholder="Section (A/B)" />
+                  <select name="weekday" required>
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                  </select>
+                  <input type="text" name="periodName" placeholder="Period (e.g. 1st)" required />
+                  <input type="text" name="subject" placeholder="Subject" required />
+                  <input type="text" name="teacherName" placeholder="Teacher Name" />
+                  <input type="time" name="startTime" />
+                  <input type="time" name="endTime" />
+                  <button type="submit">Save Timetable</button>
+                  <button type="button" id="cancelTimetableEditBtn" class="secondary-btn" hidden>Cancel Edit</button>
+                </form>
+                <div id="timetableMsg" class="msg"></div>
+              </section>
+
+              <section class="requires-auth" id="records">
+                <h2>Recent Records</h2>
+                <div class="filter-bar">
+                  <select id="studentClassFilter"></select>
+                  <input type="text" id="studentSearch" placeholder="Search Student (Name / Admission No / B-Form)" />
+                  <select id="feeClassFilter"></select>
+                </div>
+                <div class="tables">
+                  <div>
+                    <h3>Students</h3>
+                    <table id="studentsTable">
+                      <thead>
+                        <tr>
+                          <th>Admission No</th>
+                          <th>Name</th>
+                          <th>B-Form</th>
+                          <th>Class</th>
+                          <th>Phone</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                  <div>
+                    <h3>Fee Records</h3>
+                    <table id="feesTable">
+                      <thead>
+                        <tr>
+                          <th>Student</th>
+                          <th>Class</th>
+                          <th>Month</th>
+                          <th>Paid</th>
+                          <th>Due</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                  <div>
+                    <h3>Notices</h3>
+                    <table id="noticesTable">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Title</th>
+                          <th>Audience</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                  <div>
+                    <h3>Timetable</h3>
+                    <table id="timetableTable">
+                      <thead>
+                        <tr>
+                          <th>Day</th>
+                          <th>Class</th>
+                          <th>Period</th>
+                          <th>Subject</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+              </section>
+            </main>
+          </div>
+        </div>
+      </div>
+
+      <footer class="portal-footer">
+        <div class="footer-grid">
+          <div>
+            <h3>The Scholar Kids School</h3>
+            <p>Digital education services portal for school operations and parent communication.</p>
+          </div>
+          <div>
+            <h3>Public Links</h3>
+            <p>Home, Services, School Notices, Staff Login</p>
+          </div>
+          <div>
+            <h3>Contact</h3>
+            <p>Help Desk: #03111652325</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
