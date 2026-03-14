@@ -8,6 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
 const JWT_EXPIRES_IN = String(process.env.JWT_EXPIRES_IN || 'never').trim();
+let startupPromise;
 const JWT_SIGN_OPTIONS = (() => {
   const keyword = JWT_EXPIRES_IN.toLowerCase();
   if (!JWT_EXPIRES_IN || ['never', 'none', 'lifetime', 'infinite', 'no-expiry'].includes(keyword)) {
@@ -92,6 +93,22 @@ app.use(
     },
   })
 );
+
+function ensureAppReady() {
+  if (!startupPromise) {
+    startupPromise = initDb().then(() => ensureDefaultAdmin());
+  }
+  return startupPromise;
+}
+
+app.use(async (_req, _res, next) => {
+  try {
+    await ensureAppReady();
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 function normalizeClassName(input) {
   if (!input) return null;
@@ -1258,17 +1275,20 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Unexpected server error' });
 });
 
-initDb()
-  .then(async () => {
-    await ensureDefaultAdmin();
-    app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+if (require.main === module) {
+  ensureAppReady()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+      });
+    })
+    .catch((error) => {
+      console.error('Database initialization failed:', error);
+      process.exit(1);
     });
-  })
-  .catch((error) => {
-    console.error('Database initialization failed:', error);
-    process.exit(1);
-  });
+}
+
+module.exports = app;
 
 
 
