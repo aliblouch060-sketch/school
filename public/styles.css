@@ -452,6 +452,27 @@ section {
   color: #2b5646;
 }
 
+.public-notice-list strong,
+.public-notice-list span,
+.public-notice-list p {
+  display: block;
+}
+
+.public-notice-list strong {
+  margin-bottom: 2px;
+}
+
+.public-notice-list span {
+  font-size: 0.84rem;
+  color: #5a786b;
+  margin-bottom: 4px;
+}
+
+.public-notice-list p {
+  margin: 0;
+  color: #244b3d;
+}
+
 .dashboard {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
@@ -521,6 +542,15 @@ section {
 .grid-form textarea {
   min-height: 44px;
   resize: vertical;
+}
+
+#noticeForm textarea {
+  min-height: 110px;
+  grid-column: 1 / -1;
+}
+
+#noticeForm button {
+  grid-column: span 1;
 }
 
 input,

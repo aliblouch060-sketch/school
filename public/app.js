@@ -159,7 +159,13 @@ function renderPublicNoticeWidgets(notices) {
       publicNoticeList.innerHTML = '<li>No public notices available yet.</li>';
     } else {
       publicNoticeList.innerHTML = records
-        .map((notice) => `<li>${escapeHtml(notice.publish_date)} - ${escapeHtml(notice.title)} (${escapeHtml(notice.audience)})</li>`)
+        .map((notice) => `
+          <li>
+            <strong>${escapeHtml(notice.publish_date)} - ${escapeHtml(notice.title)}</strong>
+            <span>${escapeHtml(notice.audience)}</span>
+            <p>${escapeHtml(notice.body || 'No details added yet.')}</p>
+          </li>
+        `)
         .join('');
     }
   }
@@ -574,7 +580,13 @@ function renderNotices(notices) {
   noticesTableBody.innerHTML = '';
   notices.slice(0, 10).forEach((notice) => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${notice.publish_date}</td><td>${notice.title}</td><td>${notice.audience}</td>${renderActionCell('notices', notice, notice.title)}`;
+    tr.innerHTML = `
+      <td>${escapeHtml(notice.publish_date)}</td>
+      <td>${escapeHtml(notice.title)}</td>
+      <td>${escapeHtml(notice.body || '-')}</td>
+      <td>${escapeHtml(notice.audience)}</td>
+      ${renderActionCell('notices', notice, notice.title)}
+    `;
     noticesTableBody.appendChild(tr);
   });
 }
