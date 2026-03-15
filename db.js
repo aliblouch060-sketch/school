@@ -2,7 +2,9 @@ const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const { Pool } = require('pg');
 
-const dbPath = path.join(__dirname, 'school.db');
+const dbPath = process.env.VERCEL && !process.env.DATABASE_URL
+  ? '/tmp/school.db'
+  : path.join(__dirname, 'school.db');
 const isPostgres = Boolean(process.env.DATABASE_URL);
 
 let sqliteDb;
