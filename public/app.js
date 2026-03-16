@@ -39,6 +39,7 @@ const resultExamFilter = document.getElementById('resultExamFilter');
 const loadResultBtn = document.getElementById('loadResultBtn');
 const absenceNotificationsToggle = document.getElementById('absenceNotificationsToggle');
 const absenceNotificationStatus = document.getElementById('absenceNotificationStatus');
+const testAbsenceNotificationBtn = document.getElementById('testAbsenceNotificationBtn');
 const feeTotalAmountInput = document.getElementById('feeTotalAmount');
 const autoGenerateFeeBtn = document.getElementById('autoGenerateFeeBtn');
 
@@ -77,6 +78,7 @@ let activePortalPage = 'home';
 let serviceWorkerReloadScheduled = false;
 let absenceNotificationPollTimer = null;
 let absenceNotificationsEnabled = false;
+let adminPushSubscriptionCount = 0;
 const hadServiceWorkerControllerAtLoad = 'serviceWorker' in navigator && Boolean(navigator.serviceWorker.controller);
 const TOKEN_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 const ABSENCE_POLL_INTERVAL_MS = 30 * 1000;
@@ -552,6 +554,7 @@ async function subscribeCurrentDeviceToPush() {
     method: 'POST',
     body: JSON.stringify({ subscription }),
   });
+  adminPushSubscriptionCount = Math.max(adminPushSubscriptionCount, 1);
 
   return { ok: true, subscription };
 }
@@ -568,6 +571,34 @@ async function unsubscribeCurrentDeviceFromPush() {
     body: JSON.stringify({ endpoint: subscription.endpoint }),
   });
   await subscription.unsubscribe().catch(() => {});
+  adminPushSubscriptionCount = Math.max(0, adminPushSubscriptionCount - 1);
+}
+
+async function loadPushSubscriptionStatus() {
+  if (!authUser || authUser.role !== 'Admin') {
+    adminPushSubscriptionCount = 0;
+    return;
+  }
+
+  const data = await api('/api/push/status');
+  adminPushSubscriptionCount = Number(data?.subscriptionCount || 0);
+}
+
+async function sendTestAbsenceNotification() {
+  if (!authUser || authUser.role !== 'Admin') return;
+
+  const subscriptionResult = await subscribeCurrentDeviceToPush();
+  if (!subscriptionResult.ok) {
+    if (subscriptionResult.reason === 'permission-denied') {
+      throw new Error('Mobile/browser notification permission allow karein.');
+    }
+    throw new Error('Is device par push subscription complete nahi hui.');
+  }
+
+  await loadPushSubscriptionStatus();
+  updateAbsenceNotificationUI();
+  await api('/api/push/test', { method: 'POST' });
+  setMessage('attendanceMsg', 'Test notification send kar di gayi hai. Mobile par check karein.');
 }
 
 function stopAbsenceNotificationPolling() {
@@ -581,10 +612,14 @@ async function loadAbsenceNotificationSettings() {
   if (!authUser || authUser.role !== 'Admin') {
     absenceNotificationsEnabled = false;
     saveAbsenceNotificationPreference(false);
+    adminPushSubscriptionCount = 0;
     return;
   }
 
-  const data = await api('/api/settings/absence-notifications');
+  const [data] = await Promise.all([
+    api('/api/settings/absence-notifications'),
+    loadPushSubscriptionStatus(),
+  ]);
   absenceNotificationsEnabled = Boolean(data?.enabled);
   saveAbsenceNotificationPreference(absenceNotificationsEnabled);
 }
@@ -603,6 +638,9 @@ function updateAbsenceNotificationUI() {
     absenceNotificationsToggle.checked = enabled;
     absenceNotificationsToggle.disabled = !isAdmin;
   }
+  if (testAbsenceNotificationBtn) {
+    testAbsenceNotificationBtn.disabled = !isAdmin || !enabled;
+  }
 
   if (!isAdmin) {
     updateAbsenceNotificationStatus('Only admin can use absent student notifications.');
@@ -617,27 +655,27 @@ function updateAbsenceNotificationUI() {
   }
 
   if (!('Notification' in window)) {
-    updateAbsenceNotificationStatus('Server popup is on. This browser cannot show direct notifications.');
+    updateAbsenceNotificationStatus(`Server popup is on. Linked mobile devices: ${adminPushSubscriptionCount}.`);
     stopAbsenceNotificationPolling();
     return;
   }
 
   if (Notification.permission === 'granted') {
     if (supportsPushNotifications()) {
-      updateAbsenceNotificationStatus('On. Browser, mobile push, aur server alerts active hain.');
+      updateAbsenceNotificationStatus(`On. Browser, mobile push, aur server alerts active hain. Linked mobile devices: ${adminPushSubscriptionCount}.`);
     } else {
-      updateAbsenceNotificationStatus('On. Browser and server alerts active hain.');
+      updateAbsenceNotificationStatus(`On. Browser and server alerts active hain. Linked mobile devices: ${adminPushSubscriptionCount}.`);
     }
     return;
   }
 
   if (Notification.permission === 'denied') {
-    updateAbsenceNotificationStatus('Server popup on hai. Browser/mobile permission blocked hai.');
+    updateAbsenceNotificationStatus(`Server popup on hai. Browser/mobile permission blocked hai. Linked mobile devices: ${adminPushSubscriptionCount}.`);
     stopAbsenceNotificationPolling();
     return;
   }
 
-  updateAbsenceNotificationStatus('Toggle on hai. Browser/mobile permission allow karein for push alerts.');
+  updateAbsenceNotificationStatus(`Toggle on hai. Browser/mobile permission allow karein for push alerts. Linked mobile devices: ${adminPushSubscriptionCount}.`);
 }
 
 async function showAbsenceNotification(row) {
@@ -2119,6 +2157,12 @@ attendanceDateFilter.addEventListener('change', () => loadAttendanceRecords().ca
 loadAttendanceBtn.addEventListener('click', () => loadAttendanceRecords().catch((error) => setMessage('attendanceMsg', error.message, 'error')));
 absenceNotificationsToggle?.addEventListener('change', (event) => {
   setAbsenceNotificationsEnabled(Boolean(event.target.checked)).catch((error) => {
+    updateAbsenceNotificationUI();
+    setMessage('attendanceMsg', error.message, 'error');
+  });
+});
+testAbsenceNotificationBtn?.addEventListener('click', () => {
+  sendTestAbsenceNotification().catch((error) => {
     updateAbsenceNotificationUI();
     setMessage('attendanceMsg', error.message, 'error');
   });

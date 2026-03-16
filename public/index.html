@@ -277,7 +277,10 @@
                     <span>Absent Student Notifications</span>
                     <input type="checkbox" id="absenceNotificationsToggle" />
                   </label>
-                  <p id="absenceNotificationStatus" class="helper-text">Off. Turn on to get absent student alerts in the app.</p>
+                  <div class="attendance-alert-actions">
+                    <button type="button" id="testAbsenceNotificationBtn" class="secondary-btn">Send Test Notification</button>
+                    <p id="absenceNotificationStatus" class="helper-text">Off. Turn on to get absent student alerts in the app.</p>
+                  </div>
                 </div>
                 <form id="attendanceForm" class="grid-form">
                   <select name="className" id="attendanceClass" required></select>

@@ -227,6 +227,15 @@ async function deletePushSubscription(endpoint) {
   await run('DELETE FROM push_subscriptions WHERE endpoint = ?', [String(endpoint || '').trim()]);
 }
 
+async function getPushSubscriptionsForUser(userId) {
+  return all(
+    `SELECT id, endpoint, subscription_json
+     FROM push_subscriptions
+     WHERE user_id = ?`,
+    [userId]
+  );
+}
+
 function sendWindowsAbsencePopup(row) {
   if (process.platform !== 'win32' || !row) return;
 
@@ -280,6 +289,12 @@ async function sendPushNotificationToAdmins(row) {
     attendanceDate: row.attendance_date || '',
     publicKey,
   });
+
+  await sendPushPayloadToSubscriptions(subscriptions, payload);
+}
+
+async function sendPushPayloadToSubscriptions(subscriptions, payload) {
+  if (!subscriptions.length) return;
 
   await Promise.all(
     subscriptions.map(async (entry) => {
@@ -1137,6 +1152,37 @@ app.post('/api/push/unsubscribe', requireAuth, requireRole('Admin'), async (req,
 
     await deletePushSubscription(endpoint);
     return res.json({ ok: true });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/push/status', requireAuth, requireRole('Admin'), async (req, res) => {
+  try {
+    const subscriptions = await getPushSubscriptionsForUser(req.user.id);
+    return res.json({ subscriptionCount: subscriptions.length });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/push/test', requireAuth, requireRole('Admin'), async (req, res) => {
+  try {
+    const subscriptions = await getPushSubscriptionsForUser(req.user.id);
+    if (!subscriptions.length) {
+      return res.status(400).json({ error: 'No mobile subscription found for this admin device' });
+    }
+
+    await ensureWebPushConfigured();
+    const payload = JSON.stringify({
+      title: 'Test Notification',
+      body: 'Admin mobile push is connected successfully.',
+      url: '/#attendance',
+      tag: `push-test-${Date.now()}`,
+    });
+
+    await sendPushPayloadToSubscriptions(subscriptions, payload);
+    return res.json({ ok: true, subscriptionCount: subscriptions.length });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

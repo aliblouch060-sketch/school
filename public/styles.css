@@ -410,6 +410,12 @@ section {
   margin: 0;
 }
 
+.attendance-alert-actions {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
 .toggle-row {
   display: inline-flex;
   align-items: center;
