@@ -578,6 +578,17 @@ async function unsubscribeCurrentDeviceFromPush() {
   adminPushSubscriptionCount = Math.max(0, adminPushSubscriptionCount - 1);
 }
 
+async function syncCurrentDevicePushState() {
+  if (!authUser) return;
+
+  if (authUser.role === 'Admin' && absenceNotificationsEnabled) {
+    await subscribeCurrentDeviceToPush().catch(() => {});
+    return;
+  }
+
+  await unsubscribeCurrentDeviceFromPush().catch(() => {});
+}
+
 async function loadPushSubscriptionStatus() {
   if (!authUser || authUser.role !== 'Admin') {
     adminPushSubscriptionCount = 0;
@@ -1877,10 +1888,7 @@ async function refreshData() {
   renderNotices(notices);
   renderTimetable(timetable);
   syncVoucherAutoGenerate();
-
-  if (authUser.role === 'Admin' && absenceNotificationsEnabled) {
-    subscribeCurrentDeviceToPush().catch(() => {});
-  }
+  await syncCurrentDevicePushState();
 
   await Promise.all([loadAttendanceRecords(), loadResultRecords(), loadDashboard()]);
   await startAbsenceNotificationPolling();

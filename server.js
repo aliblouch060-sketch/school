@@ -1143,7 +1143,7 @@ app.post('/api/push/subscribe', requireAuth, requireRole('Admin'), async (req, r
   }
 });
 
-app.post('/api/push/unsubscribe', requireAuth, requireRole('Admin'), async (req, res) => {
+app.post('/api/push/unsubscribe', requireAuth, async (req, res) => {
   try {
     const endpoint = String(req.body?.endpoint || '').trim();
     if (!endpoint) {
