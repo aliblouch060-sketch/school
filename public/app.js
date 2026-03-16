@@ -2,6 +2,7 @@ const CLASS_OPTIONS = ['Play Group', 'Nursery', 'Prep', '1', '2', '3', '4', '5',
 
 const loginForm = document.getElementById('loginForm');
 const userForm = document.getElementById('userForm');
+const userEditForm = document.getElementById('userEditForm');
 const logoutBtn = document.getElementById('logoutBtn');
 const currentUserInput = document.getElementById('currentUser');
 const authModeInput = document.getElementById('authMode');
@@ -60,13 +61,16 @@ const cancelResultEditBtn = document.getElementById('cancelResultEditBtn');
 const cancelFeeEditBtn = document.getElementById('cancelFeeEditBtn');
 const cancelNoticeEditBtn = document.getElementById('cancelNoticeEditBtn');
 const cancelTimetableEditBtn = document.getElementById('cancelTimetableEditBtn');
+const cancelUserEditBtn = document.getElementById('cancelUserEditBtn');
 const portalPages = Array.from(document.querySelectorAll('[data-portal-page]'));
 const portalPageButtons = Array.from(document.querySelectorAll('[data-portal-page-btn]'));
 const publicNoticeList = document.getElementById('publicNoticeList');
 const publicNoticeTickerTrack = document.getElementById('publicNoticeTickerTrack');
+const usersTableBody = document.querySelector('#usersTable tbody');
 
 let allStudents = [];
 let allFees = [];
+let allUsers = [];
 let authToken = localStorage.getItem('sms_token') || '';
 let authUser = null;
 let currentVoucher = null;
@@ -946,6 +950,48 @@ function renderTimetable(rows) {
   });
 }
 
+function formatDateTime(value) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString();
+}
+
+function clearUserEditForm() {
+  if (!userEditForm) return;
+  userEditForm.reset();
+  userEditForm.hidden = true;
+}
+
+function startUserEdit(user) {
+  if (!userEditForm || !user) return;
+  userEditForm.hidden = false;
+  userEditForm.elements.userId.value = String(user.id || '');
+  userEditForm.elements.username.value = user.username || '';
+  userEditForm.elements.role.value = user.role || 'Teacher';
+  userEditForm.elements.password.value = '';
+  userEditForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function renderUsers(users) {
+  if (!usersTableBody) return;
+
+  usersTableBody.innerHTML = '';
+  users.forEach((user) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${escapeHtml(user.username)}</td>
+      <td>${escapeHtml(user.role)}</td>
+      <td>${escapeHtml(formatDateTime(user.created_at))}</td>
+      <td class="action-cell">
+        <button type="button" class="action-btn edit-btn" data-user-id="${user.id}">Edit</button>
+        <button type="button" class="action-btn secondary-btn" data-user-reset-id="${user.id}">Reset Password</button>
+      </td>
+    `;
+    usersTableBody.appendChild(tr);
+  });
+}
+
 function formatMoney(value) {
   return Number(value || 0).toFixed(2);
 }
@@ -1809,17 +1855,20 @@ async function refreshData() {
   if (!authUser) return;
 
   const requests = [
+    authUser.role === 'Admin' ? api('/api/auth/users') : Promise.resolve([]),
     api('/api/students'),
     authUser.role === 'Admin' ? api('/api/fees') : Promise.resolve([]),
     api('/api/notices'),
     api('/api/timetable'),
     authUser.role === 'Admin' ? loadAbsenceNotificationSettings() : Promise.resolve(),
   ];
-  const [students, fees, notices, timetable] = await Promise.all(requests);
+  const [users, students, fees, notices, timetable] = await Promise.all(requests);
 
+  allUsers = users;
   allStudents = students;
   allFees = fees;
   updateAbsenceNotificationUI();
+  renderUsers(allUsers);
 
   populateStudentSelects();
   renderClassColumns();
@@ -1869,6 +1918,31 @@ userForm.addEventListener('submit', async (e) => {
     await api('/api/auth/users', { method: 'POST', body: JSON.stringify(payload) });
     userForm.reset();
     setMessage('authMsg', 'User created successfully.');
+    await refreshData();
+  } catch (error) {
+    setMessage('authMsg', error.message, 'error');
+  }
+});
+
+userEditForm?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    const payload = getFormData(userEditForm);
+    const userId = Number(payload.userId || 0);
+    if (!userId) throw new Error('User select karein.');
+
+    await api(`/api/auth/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        username: payload.username,
+        role: payload.role,
+        password: payload.password || '',
+      }),
+    });
+
+    clearUserEditForm();
+    setMessage('authMsg', 'User updated successfully.');
+    await refreshData();
   } catch (error) {
     setMessage('authMsg', error.message, 'error');
   }
@@ -2166,6 +2240,46 @@ testAbsenceNotificationBtn?.addEventListener('click', () => {
     updateAbsenceNotificationUI();
     setMessage('attendanceMsg', error.message, 'error');
   });
+});
+cancelUserEditBtn?.addEventListener('click', () => {
+  clearUserEditForm();
+});
+usersTableBody?.addEventListener('click', async (event) => {
+  const editButton = event.target.closest('[data-user-id]');
+  if (editButton) {
+    const userId = Number(editButton.dataset.userId || 0);
+    const user = allUsers.find((item) => Number(item.id) === userId);
+    if (user) startUserEdit(user);
+    return;
+  }
+
+  const resetButton = event.target.closest('[data-user-reset-id]');
+  if (!resetButton) return;
+
+  const userId = Number(resetButton.dataset.userResetId || 0);
+  const user = allUsers.find((item) => Number(item.id) === userId);
+  if (!user) return;
+
+  const newPassword = window.prompt(`New password for ${user.username}`, '');
+  if (newPassword == null) return;
+  if (String(newPassword).length < 6) {
+    setMessage('authMsg', 'Password kam az kam 6 characters ka hona chahiye.', 'error');
+    return;
+  }
+
+  try {
+    await api(`/api/auth/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        username: user.username,
+        role: user.role,
+        password: newPassword,
+      }),
+    });
+    setMessage('authMsg', `Password reset ho gaya for ${user.username}.`);
+  } catch (error) {
+    setMessage('authMsg', error.message, 'error');
+  }
 });
 resultClassFilter.addEventListener('change', () => loadResultRecords().catch((error) => setMessage('resultMsg', error.message, 'error')));
 resultExamFilter.addEventListener('input', () => loadResultRecords().catch((error) => setMessage('resultMsg', error.message, 'error')));

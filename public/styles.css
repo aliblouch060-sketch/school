@@ -697,6 +697,10 @@ button:hover {
   overflow-x: auto;
 }
 
+.access-users-wrap {
+  margin-top: 12px;
+}
+
 .tables > div::-webkit-scrollbar {
   height: 8px;
 }

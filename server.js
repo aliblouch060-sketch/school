@@ -1233,6 +1233,56 @@ app.put('/api/attendance/:id', requireAuth, requireRole('Admin', 'Teacher'), asy
   }
 });
 
+app.put('/api/auth/users/:id', requireAuth, requireRole('Admin'), async (req, res) => {
+  try {
+    const userId = Number(req.params.id);
+    if (!userId) {
+      return res.status(400).json({ error: 'Valid user id is required' });
+    }
+
+    const existing = await get('SELECT id, username, role FROM users WHERE id = ?', [userId]);
+    if (!existing) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const username = String(req.body?.username || '').trim();
+    const role = String(req.body?.role || '').trim();
+    const password = String(req.body?.password || '');
+
+    if (!username || !role) {
+      return res.status(400).json({ error: 'username and role are required' });
+    }
+
+    if (!['Admin', 'Teacher'].includes(role)) {
+      return res.status(400).json({ error: 'role must be Admin or Teacher' });
+    }
+
+    if (password && password.length < 6) {
+      return res.status(400).json({ error: 'password must be at least 6 characters' });
+    }
+
+    if (password) {
+      const passwordHash = await bcrypt.hash(password, 10);
+      await run('UPDATE users SET username = ?, role = ?, password_hash = ? WHERE id = ?', [
+        username,
+        role,
+        passwordHash,
+        userId,
+      ]);
+    } else {
+      await run('UPDATE users SET username = ?, role = ? WHERE id = ?', [username, role, userId]);
+    }
+
+    const user = await get('SELECT id, username, role, created_at FROM users WHERE id = ?', [userId]);
+    return res.json(user);
+  } catch (error) {
+    if (String(error.message).toLowerCase().includes('unique')) {
+      return res.status(400).json({ error: 'username already exists' });
+    }
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 app.put('/api/results/:id', requireAuth, requireRole('Admin', 'Teacher'), async (req, res) => {
   const resultId = Number(req.params.id);
   if (!resultId) return res.status(400).json({ error: 'Invalid result id' });

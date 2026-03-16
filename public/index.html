@@ -241,6 +241,33 @@
                   </select>
                   <button type="submit">Create User</button>
                 </form>
+                <form id="userEditForm" class="grid-form admin-only requires-auth" hidden>
+                  <input type="hidden" name="userId" />
+                  <input type="text" name="username" placeholder="Edit Username" required />
+                  <select name="role" required>
+                    <option value="Teacher">Teacher</option>
+                    <option value="Admin">Admin</option>
+                  </select>
+                  <input type="password" name="password" placeholder="New Password (optional)" />
+                  <button type="submit">Update User</button>
+                  <button type="button" id="cancelUserEditBtn" class="secondary-btn">Cancel</button>
+                </form>
+                <div class="tables admin-only requires-auth access-users-wrap">
+                  <div>
+                    <h3>Existing Users</h3>
+                    <table id="usersTable">
+                      <thead>
+                        <tr>
+                          <th>Username</th>
+                          <th>Role</th>
+                          <th>Created</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
                 <div id="authMsg" class="msg"></div>
               </section>
 
