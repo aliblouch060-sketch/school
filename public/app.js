@@ -81,6 +81,7 @@ const hadServiceWorkerControllerAtLoad = 'serviceWorker' in navigator && Boolean
 const TOKEN_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 const ABSENCE_POLL_INTERVAL_MS = 30 * 1000;
 const ABSENCE_NOTIFICATION_SEEN_KEY = 'sms_absence_seen_ids';
+const ABSENCE_NOTIFICATION_PREF_KEY = 'sms_absence_notifications_pref';
 
 function setMessage(id, message, type = 'success') {
   const el = document.getElementById(id);
@@ -113,6 +114,22 @@ function getTodayDateKey() {
 
 function isAbsenceNotificationsEnabled() {
   return Boolean(absenceNotificationsEnabled);
+}
+
+function saveAbsenceNotificationPreference(enabled) {
+  try {
+    localStorage.setItem(ABSENCE_NOTIFICATION_PREF_KEY, enabled ? '1' : '0');
+  } catch (_error) {
+    // Ignore local storage write issues.
+  }
+}
+
+function loadAbsenceNotificationPreference() {
+  try {
+    return localStorage.getItem(ABSENCE_NOTIFICATION_PREF_KEY) === '1';
+  } catch (_error) {
+    return false;
+  }
 }
 
 function readSeenAbsenceState() {
@@ -563,11 +580,13 @@ function stopAbsenceNotificationPolling() {
 async function loadAbsenceNotificationSettings() {
   if (!authUser || authUser.role !== 'Admin') {
     absenceNotificationsEnabled = false;
+    saveAbsenceNotificationPreference(false);
     return;
   }
 
   const data = await api('/api/settings/absence-notifications');
   absenceNotificationsEnabled = Boolean(data?.enabled);
+  saveAbsenceNotificationPreference(absenceNotificationsEnabled);
 }
 
 function updateAbsenceNotificationStatus(message) {
@@ -693,6 +712,7 @@ async function setAbsenceNotificationsEnabled(enabled) {
       body: JSON.stringify({ enabled: false }),
     });
     absenceNotificationsEnabled = false;
+    saveAbsenceNotificationPreference(false);
     updateAbsenceNotificationUI();
     return;
   }
@@ -702,6 +722,7 @@ async function setAbsenceNotificationsEnabled(enabled) {
     body: JSON.stringify({ enabled: true }),
   });
   absenceNotificationsEnabled = true;
+  saveAbsenceNotificationPreference(true);
 
   let subscriptionResult = { ok: false, reason: 'unsupported' };
   try {
@@ -1760,6 +1781,7 @@ async function refreshData() {
 
   allStudents = students;
   allFees = fees;
+  updateAbsenceNotificationUI();
 
   populateStudentSelects();
   renderClassColumns();
@@ -1795,6 +1817,7 @@ loginForm.addEventListener('submit', async (e) => {
 logoutBtn.addEventListener('click', () => {
   stopAbsenceNotificationPolling();
   absenceNotificationsEnabled = false;
+  saveAbsenceNotificationPreference(false);
   setAuth('', null);
   allFees = [];
   setMessage('authMsg', 'Logged out.');
@@ -2186,6 +2209,7 @@ async function boot() {
   setupPortalPages();
   setupControls();
   setupInstallPrompt();
+  absenceNotificationsEnabled = loadAbsenceNotificationPreference();
   updateAccessUI();
   renderPublicNoticeWidgets([]);
   loadPublicNotices().catch(() => {});
