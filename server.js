@@ -1,7 +1,9 @@
 const express = require('express');
 const path = require('path');
+const { spawn } = require('child_process');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const webPush = require('web-push');
 const { initDb, run, get, all, isPostgres } = require('./db');
 
 const app = express();
@@ -96,7 +98,9 @@ app.use(
 
 function ensureAppReady() {
   if (!startupPromise) {
-    startupPromise = initDb().then(() => ensureDefaultAdmin());
+    startupPromise = initDb()
+      .then(() => ensureDefaultAdmin())
+      .then(() => ensureWebPushConfigured());
   }
   return startupPromise;
 }
@@ -136,6 +140,151 @@ function getBaseFeeForClass(className) {
 
 function feeMonthToLabel(value) {
   return String(value || '').trim();
+}
+
+function escapePowerShellSingleQuotedText(value) {
+  return String(value || '').replace(/'/g, "''");
+}
+
+async function getAppSetting(key, defaultValue = null) {
+  const row = await get('SELECT value FROM app_settings WHERE key = ? LIMIT 1', [String(key)]);
+  return row ? row.value : defaultValue;
+}
+
+async function setAppSetting(key, value) {
+  const settingKey = String(key);
+  const settingValue = String(value ?? '');
+  await run(
+    `INSERT INTO app_settings (key, value, updated_at)
+     VALUES (?, ?, CURRENT_TIMESTAMP)
+     ON CONFLICT(key)
+     DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP`,
+    [settingKey, settingValue]
+  );
+}
+
+async function ensureWebPushConfigured() {
+  let publicKey = await getAppSetting('push_vapid_public_key', '');
+  let privateKey = await getAppSetting('push_vapid_private_key', '');
+
+  if (!publicKey || !privateKey) {
+    const generated = webPush.generateVAPIDKeys();
+    publicKey = generated.publicKey;
+    privateKey = generated.privateKey;
+    await setAppSetting('push_vapid_public_key', publicKey);
+    await setAppSetting('push_vapid_private_key', privateKey);
+  }
+
+  webPush.setVapidDetails(
+    process.env.WEB_PUSH_SUBJECT || 'mailto:admin@school.local',
+    publicKey,
+    privateKey
+  );
+
+  return { publicKey, privateKey };
+}
+
+async function isAbsencePopupEnabled() {
+  const value = await getAppSetting('absence_notifications_enabled', '0');
+  return String(value) === '1';
+}
+
+function parsePushSubscription(rawValue) {
+  if (!rawValue || typeof rawValue !== 'object') return null;
+  const endpoint = String(rawValue.endpoint || '').trim();
+  const p256dh = String(rawValue.keys?.p256dh || '').trim();
+  const auth = String(rawValue.keys?.auth || '').trim();
+  if (!endpoint || !p256dh || !auth) return null;
+  return {
+    endpoint,
+    keys: { p256dh, auth },
+  };
+}
+
+async function savePushSubscription(userId, subscription) {
+  const payload = JSON.stringify(subscription);
+  await run(
+    `INSERT INTO push_subscriptions (user_id, endpoint, subscription_json)
+     VALUES (?, ?, ?)
+     ON CONFLICT(endpoint)
+     DO UPDATE SET user_id = excluded.user_id, subscription_json = excluded.subscription_json`,
+    [userId, subscription.endpoint, payload]
+  );
+}
+
+async function deletePushSubscription(endpoint) {
+  await run('DELETE FROM push_subscriptions WHERE endpoint = ?', [String(endpoint || '').trim()]);
+}
+
+function sendWindowsAbsencePopup(row) {
+  if (process.platform !== 'win32' || !row) return;
+
+  const title = escapePowerShellSingleQuotedText('School Management System');
+  const classLabel = `${row.class_name || '-'}${row.section ? `-${row.section}` : ''}`;
+  const message = escapePowerShellSingleQuotedText(
+    `${row.full_name || 'Student'} from class ${classLabel} is absent on ${row.attendance_date || ''}.`
+  );
+  const script = `$wshell = New-Object -ComObject Wscript.Shell; $wshell.Popup('${message}',5,'${title}',64) | Out-Null`;
+
+  try {
+    const child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script], {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true,
+    });
+    child.unref();
+  } catch (error) {
+    console.error('Windows absence popup failed:', error.message);
+  }
+}
+
+async function maybeSendAbsencePopup(row) {
+  if (!row || row.status !== 'Absent') return;
+  if (!(await isAbsencePopupEnabled())) return;
+  sendWindowsAbsencePopup(row);
+}
+
+async function sendPushNotificationToAdmins(row) {
+  if (!row || row.status !== 'Absent') return;
+
+  const subscriptions = await all(
+    `SELECT ps.id, ps.endpoint, ps.subscription_json
+     FROM push_subscriptions ps
+     JOIN users u ON u.id = ps.user_id
+     WHERE u.role = 'Admin'`
+  );
+
+  if (!subscriptions.length) return;
+
+  const { publicKey } = await ensureWebPushConfigured();
+  const classLabel = `${row.class_name || '-'}${row.section ? `-${row.section}` : ''}`;
+  const payload = JSON.stringify({
+    title: 'Student Absent Alert',
+    body: `${row.full_name || 'Student'} from class ${classLabel} is absent.`,
+    url: '/#attendance',
+    tag: `absence-${row.id}`,
+    attendanceId: row.id,
+    studentName: row.full_name || 'Student',
+    className: classLabel,
+    attendanceDate: row.attendance_date || '',
+    publicKey,
+  });
+
+  await Promise.all(
+    subscriptions.map(async (entry) => {
+      try {
+        const subscription = JSON.parse(entry.subscription_json);
+        await webPush.sendNotification(subscription, payload);
+      } catch (error) {
+        const statusCode = Number(error?.statusCode || 0);
+        if (statusCode === 404 || statusCode === 410) {
+          await deletePushSubscription(entry.endpoint);
+          return;
+        }
+        console.error('Push notification failed:', error.message);
+      }
+    })
+  );
 }
 
 function feeMonthFromPaymentDate(paymentDate) {
@@ -371,7 +520,7 @@ app.post('/api/auth/users', requireAuth, requireRole('Admin'), async (req, res) 
   }
 });
 
-app.get('/api/dashboard', requireAuth, async (_req, res) => {
+app.get('/api/dashboard', requireAuth, async (req, res) => {
   try {
     const students = await get('SELECT COUNT(*) AS count FROM students');
     const today = new Date().toISOString().slice(0, 10);
@@ -379,7 +528,9 @@ app.get('/api/dashboard', requireAuth, async (_req, res) => {
       "SELECT COUNT(*) AS count FROM attendance WHERE attendance_date = ? AND status = 'Present'",
       [today]
     );
-    const dues = await get('SELECT COALESCE(SUM(due_amount), 0) AS total_due FROM fees');
+    const dues = req.user?.role === 'Admin'
+      ? await get('SELECT COALESCE(SUM(due_amount), 0) AS total_due FROM fees')
+      : { total_due: 0 };
     const results = await get('SELECT COUNT(*) AS count FROM results');
     const notices = await get('SELECT COUNT(*) AS count FROM notices');
     const timetableEntries = await get('SELECT COUNT(*) AS count FROM timetable');
@@ -476,6 +627,9 @@ app.post('/api/attendance', requireAuth, requireRole('Admin', 'Teacher'), async 
        WHERE a.student_id = ? AND a.attendance_date = ?`,
       [studentId, attendanceDate]
     );
+
+    await maybeSendAbsencePopup(row);
+    await sendPushNotificationToAdmins(row);
 
     return res.status(201).json(row);
   } catch (error) {
@@ -747,7 +901,7 @@ app.post('/api/fees/auto-generate', requireAuth, requireRole('Admin'), async (re
   }
 });
 
-app.get('/api/fees', requireAuth, async (req, res) => {
+app.get('/api/fees', requireAuth, requireRole('Admin'), async (req, res) => {
   try {
     const { studentId } = req.query;
     const normalizedClass = normalizeClassName(req.query.className);
@@ -922,6 +1076,61 @@ app.put('/api/students/:id', requireAuth, requireRole('Admin'), async (req, res)
   }
 });
 
+app.get('/api/settings/absence-notifications', requireAuth, requireRole('Admin'), async (_req, res) => {
+  try {
+    return res.json({ enabled: await isAbsencePopupEnabled() });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/settings/absence-notifications', requireAuth, requireRole('Admin'), async (req, res) => {
+  try {
+    const enabled = Boolean(req.body?.enabled);
+    await setAppSetting('absence_notifications_enabled', enabled ? '1' : '0');
+    return res.json({ enabled });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/push/vapid-public-key', requireAuth, requireRole('Admin'), async (_req, res) => {
+  try {
+    const { publicKey } = await ensureWebPushConfigured();
+    return res.json({ publicKey });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/push/subscribe', requireAuth, requireRole('Admin'), async (req, res) => {
+  try {
+    const subscription = parsePushSubscription(req.body?.subscription);
+    if (!subscription) {
+      return res.status(400).json({ error: 'Valid push subscription is required' });
+    }
+
+    await savePushSubscription(req.user.id, subscription);
+    return res.status(201).json({ ok: true });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/push/unsubscribe', requireAuth, requireRole('Admin'), async (req, res) => {
+  try {
+    const endpoint = String(req.body?.endpoint || '').trim();
+    if (!endpoint) {
+      return res.status(400).json({ error: 'Subscription endpoint is required' });
+    }
+
+    await deletePushSubscription(endpoint);
+    return res.json({ ok: true });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 app.put('/api/attendance/:id', requireAuth, requireRole('Admin', 'Teacher'), async (req, res) => {
   const attendanceId = Number(req.params.id);
   if (!attendanceId) return res.status(400).json({ error: 'Invalid attendance id' });
@@ -954,6 +1163,9 @@ app.put('/api/attendance/:id', requireAuth, requireRole('Admin', 'Teacher'), asy
        WHERE a.id = ?`,
       [attendanceId]
     );
+
+    await maybeSendAbsencePopup(row);
+    await sendPushNotificationToAdmins(row);
 
     return res.json(row);
   } catch (error) {

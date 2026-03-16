@@ -393,6 +393,37 @@ section {
   font-size: 0.93rem;
 }
 
+.attendance-alert-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 1px solid #c7d8ce;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fcfffd 0%, #eef7f1 100%);
+}
+
+.attendance-alert-strip .helper-text {
+  margin: 0;
+}
+
+.toggle-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: #184a39;
+}
+
+.toggle-row input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand-green);
+}
+
 .service-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));

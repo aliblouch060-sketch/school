@@ -193,7 +193,7 @@
                 <h3>Today Present</h3>
                 <p id="todayPresent">0</p>
               </div>
-              <div class="card">
+              <div class="card admin-only">
                 <h3>Total Fee Due</h3>
                 <p id="totalDue">0</p>
               </div>
@@ -272,6 +272,13 @@
 
               <section class="requires-auth" id="attendance">
                 <h2>2) Attendance Module</h2>
+                <div class="attendance-alert-strip admin-only">
+                  <label class="toggle-row" for="absenceNotificationsToggle">
+                    <span>Absent Student Notifications</span>
+                    <input type="checkbox" id="absenceNotificationsToggle" />
+                  </label>
+                  <p id="absenceNotificationStatus" class="helper-text">Off. Turn on to get absent student alerts in the app.</p>
+                </div>
                 <form id="attendanceForm" class="grid-form">
                   <select name="className" id="attendanceClass" required></select>
                   <select name="studentId" id="attendanceStudent" required></select>
@@ -423,7 +430,7 @@
                 <div class="filter-bar">
                   <select id="studentClassFilter"></select>
                   <input type="text" id="studentSearch" placeholder="Search Student (Name / Admission No / B-Form)" />
-                  <select id="feeClassFilter"></select>
+                  <select id="feeClassFilter" class="admin-only"></select>
                 </div>
                 <div class="tables">
                   <div>
@@ -442,7 +449,7 @@
                       <tbody></tbody>
                     </table>
                   </div>
-                  <div>
+                  <div class="admin-only">
                     <h3>Fee Records</h3>
                     <table id="feesTable">
                       <thead>

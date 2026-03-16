@@ -37,6 +37,8 @@ const loadAttendanceBtn = document.getElementById('loadAttendanceBtn');
 const resultClassFilter = document.getElementById('resultClassFilter');
 const resultExamFilter = document.getElementById('resultExamFilter');
 const loadResultBtn = document.getElementById('loadResultBtn');
+const absenceNotificationsToggle = document.getElementById('absenceNotificationsToggle');
+const absenceNotificationStatus = document.getElementById('absenceNotificationStatus');
 const feeTotalAmountInput = document.getElementById('feeTotalAmount');
 const autoGenerateFeeBtn = document.getElementById('autoGenerateFeeBtn');
 
@@ -73,8 +75,12 @@ let tesseractLoadPromise = null;
 let tokenRefreshTimer = null;
 let activePortalPage = 'home';
 let serviceWorkerReloadScheduled = false;
+let absenceNotificationPollTimer = null;
+let absenceNotificationsEnabled = false;
 const hadServiceWorkerControllerAtLoad = 'serviceWorker' in navigator && Boolean(navigator.serviceWorker.controller);
 const TOKEN_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
+const ABSENCE_POLL_INTERVAL_MS = 30 * 1000;
+const ABSENCE_NOTIFICATION_SEEN_KEY = 'sms_absence_seen_ids';
 
 function setMessage(id, message, type = 'success') {
   const el = document.getElementById(id);
@@ -99,6 +105,52 @@ function resolveFeeMonth(feeMonth, paymentDate) {
   const explicit = String(feeMonth || '').trim();
   if (explicit) return explicit;
   return feeMonthFromPaymentDate(paymentDate);
+}
+
+function getTodayDateKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function isAbsenceNotificationsEnabled() {
+  return Boolean(absenceNotificationsEnabled);
+}
+
+function readSeenAbsenceState() {
+  try {
+    const raw = localStorage.getItem(ABSENCE_NOTIFICATION_SEEN_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (parsed && parsed.date === getTodayDateKey() && Array.isArray(parsed.ids)) {
+      return parsed;
+    }
+  } catch (_error) {
+    // Ignore invalid local storage state.
+  }
+
+  return { date: getTodayDateKey(), ids: [] };
+}
+
+function writeSeenAbsenceState(ids) {
+  localStorage.setItem(
+    ABSENCE_NOTIFICATION_SEEN_KEY,
+    JSON.stringify({ date: getTodayDateKey(), ids: Array.from(new Set(ids.map((id) => String(id)))) })
+  );
+}
+
+function markAbsenceAsSeen(id) {
+  const state = readSeenAbsenceState();
+  state.ids.push(String(id));
+  writeSeenAbsenceState(state.ids);
+}
+
+function supportsPushNotifications() {
+  return 'serviceWorker' in navigator && 'PushManager' in window;
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = `${base64String}${padding}`.replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
 }
 
 function resolvePortalPage(name) {
@@ -233,6 +285,8 @@ function updateAccessUI() {
       button.textContent = isLoggedIn ? 'Admin Panel' : 'Staff Login';
     }
   });
+
+  updateAbsenceNotificationUI();
 }
 
 async function api(url, options = {}) {
@@ -443,6 +497,239 @@ async function registerServiceWorker() {
   } catch (_error) {
     // Ignore registration failure for browsers that block SW on unsecured origins.
   }
+}
+
+async function getActiveServiceWorkerRegistration() {
+  if (!('serviceWorker' in navigator)) {
+    throw new Error('Service worker support available nahi hai.');
+  }
+
+  return navigator.serviceWorker.ready;
+}
+
+async function subscribeCurrentDeviceToPush() {
+  if (!supportsPushNotifications()) {
+    return { ok: false, reason: 'unsupported' };
+  }
+
+  const permission = Notification.permission === 'default'
+    ? await Notification.requestPermission()
+    : Notification.permission;
+
+  if (permission !== 'granted') {
+    return { ok: false, reason: 'permission-denied' };
+  }
+
+  const registration = await getActiveServiceWorkerRegistration();
+  let subscription = await registration.pushManager.getSubscription();
+
+  if (!subscription) {
+    const data = await api('/api/push/vapid-public-key');
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(String(data.publicKey || '')),
+    });
+  }
+
+  await api('/api/push/subscribe', {
+    method: 'POST',
+    body: JSON.stringify({ subscription }),
+  });
+
+  return { ok: true, subscription };
+}
+
+async function unsubscribeCurrentDeviceFromPush() {
+  if (!supportsPushNotifications()) return;
+
+  const registration = await getActiveServiceWorkerRegistration();
+  const subscription = await registration.pushManager.getSubscription();
+  if (!subscription) return;
+
+  await api('/api/push/unsubscribe', {
+    method: 'POST',
+    body: JSON.stringify({ endpoint: subscription.endpoint }),
+  });
+  await subscription.unsubscribe().catch(() => {});
+}
+
+function stopAbsenceNotificationPolling() {
+  if (absenceNotificationPollTimer) {
+    clearInterval(absenceNotificationPollTimer);
+    absenceNotificationPollTimer = null;
+  }
+}
+
+async function loadAbsenceNotificationSettings() {
+  if (!authUser || authUser.role !== 'Admin') {
+    absenceNotificationsEnabled = false;
+    return;
+  }
+
+  const data = await api('/api/settings/absence-notifications');
+  absenceNotificationsEnabled = Boolean(data?.enabled);
+}
+
+function updateAbsenceNotificationStatus(message) {
+  if (absenceNotificationStatus) {
+    absenceNotificationStatus.textContent = message;
+  }
+}
+
+function updateAbsenceNotificationUI() {
+  const isAdmin = Boolean(authUser && authUser.role === 'Admin');
+  const enabled = isAdmin && isAbsenceNotificationsEnabled();
+
+  if (absenceNotificationsToggle) {
+    absenceNotificationsToggle.checked = enabled;
+    absenceNotificationsToggle.disabled = !isAdmin;
+  }
+
+  if (!isAdmin) {
+    updateAbsenceNotificationStatus('Only admin can use absent student notifications.');
+    stopAbsenceNotificationPolling();
+    return;
+  }
+
+  if (!enabled) {
+    updateAbsenceNotificationStatus('Off. Turn on to get absent alerts on PC and subscribed mobiles.');
+    stopAbsenceNotificationPolling();
+    return;
+  }
+
+  if (!('Notification' in window)) {
+    updateAbsenceNotificationStatus('Server popup is on. This browser cannot show direct notifications.');
+    stopAbsenceNotificationPolling();
+    return;
+  }
+
+  if (Notification.permission === 'granted') {
+    if (supportsPushNotifications()) {
+      updateAbsenceNotificationStatus('On. Browser, mobile push, aur server alerts active hain.');
+    } else {
+      updateAbsenceNotificationStatus('On. Browser and server alerts active hain.');
+    }
+    return;
+  }
+
+  if (Notification.permission === 'denied') {
+    updateAbsenceNotificationStatus('Server popup on hai. Browser/mobile permission blocked hai.');
+    stopAbsenceNotificationPolling();
+    return;
+  }
+
+  updateAbsenceNotificationStatus('Toggle on hai. Browser/mobile permission allow karein for push alerts.');
+}
+
+async function showAbsenceNotification(row) {
+  if (!row || !('Notification' in window) || Notification.permission !== 'granted') return;
+
+  const classLabel = `${row.class_name || '-'}${row.section ? `-${row.section}` : ''}`;
+  const body = `${row.full_name || 'Student'} from class ${classLabel} is absent on ${row.attendance_date || getTodayDateKey()}.`;
+
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration) {
+        await registration.showNotification('Student Absent Alert', {
+          body,
+          tag: `absence-${row.id}`,
+          badge: '/icon-192.png',
+          icon: '/icon-192.png',
+        });
+        return;
+      }
+    } catch (_error) {
+      // Fall back to Notification below.
+    }
+  }
+
+  new Notification('Student Absent Alert', {
+    body,
+    tag: `absence-${row.id}`,
+    icon: '/icon-192.png',
+  });
+}
+
+async function syncAbsentNotifications({ notifyNew = false } = {}) {
+  if (!authUser || authUser.role !== 'Admin' || !isAbsenceNotificationsEnabled()) return;
+
+  const today = getTodayDateKey();
+  const rows = await api(`/api/attendance?attendanceDate=${today}`);
+  const absentRows = Array.isArray(rows) ? rows.filter((row) => row.status === 'Absent' && row.id) : [];
+  const seenState = readSeenAbsenceState();
+  const seen = new Set(seenState.ids.map((id) => String(id)));
+
+  for (const row of absentRows) {
+    const rowId = String(row.id);
+    if (seen.has(rowId)) continue;
+    seen.add(rowId);
+    if (notifyNew) {
+      await showAbsenceNotification(row);
+    }
+  }
+
+  writeSeenAbsenceState(Array.from(seen));
+}
+
+async function startAbsenceNotificationPolling() {
+  stopAbsenceNotificationPolling();
+  if (!authUser || authUser.role !== 'Admin' || !isAbsenceNotificationsEnabled()) return;
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+  await syncAbsentNotifications({ notifyNew: false });
+  absenceNotificationPollTimer = setInterval(() => {
+    syncAbsentNotifications({ notifyNew: true }).catch(() => {});
+  }, ABSENCE_POLL_INTERVAL_MS);
+}
+
+async function setAbsenceNotificationsEnabled(enabled) {
+  if (!authUser || authUser.role !== 'Admin') return;
+
+  if (!enabled) {
+    await unsubscribeCurrentDeviceFromPush().catch(() => {});
+    await api('/api/settings/absence-notifications', {
+      method: 'PUT',
+      body: JSON.stringify({ enabled: false }),
+    });
+    absenceNotificationsEnabled = false;
+    updateAbsenceNotificationUI();
+    return;
+  }
+
+  await api('/api/settings/absence-notifications', {
+    method: 'PUT',
+    body: JSON.stringify({ enabled: true }),
+  });
+  absenceNotificationsEnabled = true;
+
+  let subscriptionResult = { ok: false, reason: 'unsupported' };
+  try {
+    subscriptionResult = await subscribeCurrentDeviceToPush();
+  } catch (_error) {
+    subscriptionResult = { ok: false, reason: 'failed' };
+  }
+
+  writeSeenAbsenceState([]);
+  updateAbsenceNotificationUI();
+  await startAbsenceNotificationPolling();
+
+  if (subscriptionResult.ok) {
+    setMessage('attendanceMsg', 'Absent notifications on ho gayi hain. Is device par mobile/browser push subscribe ho gaya.');
+    return;
+  }
+
+  if (subscriptionResult.reason === 'permission-denied') {
+    setMessage('attendanceMsg', 'Toggle on ho gaya, lekin browser/mobile notification permission allow karni hogi.', 'error');
+    return;
+  }
+
+  if (subscriptionResult.reason === 'unsupported') {
+    setMessage('attendanceMsg', 'Toggle on ho gaya. Is device par push support nahi mila, lekin server-side alerts active hain.');
+    return;
+  }
+
+  setMessage('attendanceMsg', 'Toggle on ho gaya, lekin is device ki push subscription complete nahi hui.', 'error');
 }
 
 function setupControls() {
@@ -1462,12 +1749,14 @@ async function loadResultRecords() {
 async function refreshData() {
   if (!authUser) return;
 
-  const [students, fees, notices, timetable] = await Promise.all([
+  const requests = [
     api('/api/students'),
-    api('/api/fees'),
+    authUser.role === 'Admin' ? api('/api/fees') : Promise.resolve([]),
     api('/api/notices'),
     api('/api/timetable'),
-  ]);
+    authUser.role === 'Admin' ? loadAbsenceNotificationSettings() : Promise.resolve(),
+  ];
+  const [students, fees, notices, timetable] = await Promise.all(requests);
 
   allStudents = students;
   allFees = fees;
@@ -1480,7 +1769,12 @@ async function refreshData() {
   renderTimetable(timetable);
   syncVoucherAutoGenerate();
 
+  if (authUser.role === 'Admin' && absenceNotificationsEnabled) {
+    subscribeCurrentDeviceToPush().catch(() => {});
+  }
+
   await Promise.all([loadAttendanceRecords(), loadResultRecords(), loadDashboard()]);
+  await startAbsenceNotificationPolling();
 }
 
 loginForm.addEventListener('submit', async (e) => {
@@ -1499,7 +1793,10 @@ loginForm.addEventListener('submit', async (e) => {
 });
 
 logoutBtn.addEventListener('click', () => {
+  stopAbsenceNotificationPolling();
+  absenceNotificationsEnabled = false;
   setAuth('', null);
+  allFees = [];
   setMessage('authMsg', 'Logged out.');
   setPortalPage('home');
 });
@@ -1559,13 +1856,14 @@ attendanceForm.addEventListener('submit', async (e) => {
     const payload = getFormData(attendanceForm);
     payload.studentId = Number(payload.studentId);
     const editId = Number(attendanceForm.dataset.editId || 0);
+    let savedAttendance;
 
     if (editId) {
-      await api(`/api/attendance/${editId}`, { method: 'PUT', body: JSON.stringify(payload) });
+      savedAttendance = await api(`/api/attendance/${editId}`, { method: 'PUT', body: JSON.stringify(payload) });
       clearEditMode('attendance');
       setMessage('attendanceMsg', 'Attendance updated successfully.');
     } else {
-      await api('/api/attendance', { method: 'POST', body: JSON.stringify(payload) });
+      savedAttendance = await api('/api/attendance', { method: 'POST', body: JSON.stringify(payload) });
       setMessage('attendanceMsg', 'Attendance saved successfully.');
     }
 
@@ -1579,6 +1877,11 @@ attendanceForm.addEventListener('submit', async (e) => {
 
     populateStudentSelects();
     await Promise.all([loadAttendanceRecords(), loadDashboard()]);
+
+    if (savedAttendance?.status === 'Absent' && authUser?.role === 'Admin' && isAbsenceNotificationsEnabled()) {
+      markAbsenceAsSeen(savedAttendance.id);
+      await showAbsenceNotification(savedAttendance);
+    }
   } catch (error) {
     setMessage('attendanceMsg', error.message, 'error');
   }
@@ -1791,6 +2094,12 @@ feeClassFilter.addEventListener('change', applyFeeFilters);
 attendanceClassFilter.addEventListener('change', () => loadAttendanceRecords().catch((error) => setMessage('attendanceMsg', error.message, 'error')));
 attendanceDateFilter.addEventListener('change', () => loadAttendanceRecords().catch((error) => setMessage('attendanceMsg', error.message, 'error')));
 loadAttendanceBtn.addEventListener('click', () => loadAttendanceRecords().catch((error) => setMessage('attendanceMsg', error.message, 'error')));
+absenceNotificationsToggle?.addEventListener('change', (event) => {
+  setAbsenceNotificationsEnabled(Boolean(event.target.checked)).catch((error) => {
+    updateAbsenceNotificationUI();
+    setMessage('attendanceMsg', error.message, 'error');
+  });
+});
 resultClassFilter.addEventListener('change', () => loadResultRecords().catch((error) => setMessage('resultMsg', error.message, 'error')));
 resultExamFilter.addEventListener('input', () => loadResultRecords().catch((error) => setMessage('resultMsg', error.message, 'error')));
 

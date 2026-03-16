@@ -1,5 +1,5 @@
-const STATIC_CACHE_NAME = 'school-app-static-v3';
-const RUNTIME_CACHE_NAME = 'school-app-runtime-v3';
+const STATIC_CACHE_NAME = 'school-app-static-v4';
+const RUNTIME_CACHE_NAME = 'school-app-runtime-v4';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
@@ -70,6 +70,44 @@ self.addEventListener('message', (event) => {
   if (event.data?.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
+});
+
+self.addEventListener('push', (event) => {
+  const payload = event.data?.json ? event.data.json() : {};
+  const title = payload.title || 'School Management System';
+  const options = {
+    body: payload.body || 'New school update available.',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: payload.tag || 'school-alert',
+    data: {
+      url: payload.url || '/#portal',
+    },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/#portal';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (const client of windowClients) {
+        if ('focus' in client) {
+          client.navigate(targetUrl).catch(() => {});
+          return client.focus();
+        }
+      }
+
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+
+      return null;
+    })
+  );
 });
 
 self.addEventListener('fetch', (event) => {
