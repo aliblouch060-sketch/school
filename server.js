@@ -154,6 +154,17 @@ async function getAppSetting(key, defaultValue = null) {
 async function setAppSetting(key, value) {
   const settingKey = String(key);
   const settingValue = String(value ?? '');
+  if (isPostgres) {
+    await all(
+      `INSERT INTO app_settings (key, value, updated_at)
+       VALUES (?, ?, CURRENT_TIMESTAMP)
+       ON CONFLICT(key)
+       DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP`,
+      [settingKey, settingValue]
+    );
+    return;
+  }
+
   await run(
     `INSERT INTO app_settings (key, value, updated_at)
      VALUES (?, ?, CURRENT_TIMESTAMP)
