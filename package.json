@@ -1,0 +1,27 @@
+{
+  "name": "school-management-system",
+  "version": "1.0.0",
+  "description": "School management software with admission, attendance, result, and fee modules",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "migrate:sqlite-to-postgres": "node scripts/migrate-sqlite-to-postgres.js"
+  },
+  "keywords": [
+    "school",
+    "management",
+    "attendance",
+    "fees",
+    "results"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.1",
+    "sqlite3": "^5.1.7",
+    "web-push": "^3.6.7"
+  }
+}

@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Scholar Kids School | AI Staff Portal</title>
+    <meta name="theme-color" content="#0b5c4c" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon-192.png" sizes="192x192" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-backdrop"></div>
+
+    <div class="app-shell">
+      <header class="portal-top" id="overview">
+        <div class="top-strip">
+          <p id="topStripLeft">AI-Powered School Management</p>
+          <p id="topStripRight">Bilingual + Mobile Ready</p>
+        </div>
+        <div class="portal-brand-wrap">
+          <div class="brand">
+            <div class="brand-badge">
+              <img src="ska-logo.svg" alt="The Scholar Kids Academy" class="brand-logo" />
+            </div>
+            <div>
+              <p class="brand-subline" id="brandSubline">AI School Management System</p>
+              <h1 class="brand-title">The Scholar Kids School</h1>
+              <p class="brand-sub" id="brandSub">Admissions, Attendance, Results, Fees, Notices, Timetable and Smart Records</p>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button id="installAppBtn" class="install-btn" type="button" hidden>Install App</button>
+            <div class="lang-switch">
+              <button type="button" id="langToggleEn" class="lang-btn is-active">English</button>
+              <button type="button" id="langToggleUr" class="lang-btn">اردو</button>
+            </div>
+            <span id="offlineBadge" class="offline-badge" hidden>Offline Mode</span>
+            <p class="support-line">Help Desk: 0311-165-2325</p>
+          </div>
+        </div>
+        <div class="portal-menu">
+          <button type="button" class="portal-menu-btn is-active" data-portal-page-btn="home" id="menuHome">Home</button>
+          <button type="button" class="portal-menu-btn" data-portal-page-btn="services" id="menuFeatures">Features</button>
+          <button type="button" class="portal-menu-btn" data-portal-page-btn="notices" id="menuNotices">School Notices</button>
+          <button type="button" class="portal-menu-btn" data-portal-page-btn="portal" id="menuLogin">Operations Login</button>
+        </div>
+      </header>
+
+      <section class="notice-ticker-wrap" aria-label="Latest notices">
+        <p class="notice-label">Latest Notices</p>
+        <div class="notice-ticker" id="publicNoticeTicker">
+          <div class="notice-ticker-track" id="publicNoticeTickerTrack">
+            <span class="ticker-item">Notices will appear here after records are available.</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="content-layout">
+        <aside class="side-panel">
+          <p class="nav-title" id="navPortalTitle">Portal Pages</p>
+          <div class="public-nav-grid">
+            <button type="button" class="public-nav-btn is-active" data-portal-page-btn="home" id="sideHome">Portal Home</button>
+            <button type="button" class="public-nav-btn" data-portal-page-btn="services" id="sideFeatures">Features</button>
+            <button type="button" class="public-nav-btn" data-portal-page-btn="notices" id="sideNotices">Notice Board</button>
+            <button type="button" class="public-nav-btn" data-portal-page-btn="portal" id="sideLogin">Operations Login</button>
+          </div>
+
+          <p class="nav-title nav-top-space" id="navModulesTitle">School Modules</p>
+          <nav class="side-nav">
+            <a href="#workspace">Class Workspace</a>
+            <a href="#access">Access</a>
+            <a href="#admissions">Admissions</a>
+            <a href="#attendance">Attendance</a>
+            <a href="#paper">Paper</a>
+            <a href="#results">Results</a>
+            <a href="#syllabus">Syllabus</a>
+            <a href="#fees">Fees</a>
+            <a href="#voucher">Vouchers</a>
+            <a href="#accounts">Income & Expenses</a>
+            <a href="#notices">Notices</a>
+            <a href="#timetable">Timetable</a>
+            <a href="#records">Records</a>
+          </nav>
+
+          <div class="side-card">
+            <p class="side-card-title" id="sideCardTitle">AI Ready</p>
+            <p id="sideCardBody">Smart data entry, attendance insights, and bilingual workflows for fast daily operations.</p>
+          </div>
+        </aside>
+
+        <div class="main-panel">
+          <div class="portal-page is-active" data-portal-page="home">
+            <section class="hero-panel">
+              <p class="eyebrow" id="heroEyebrow">AI-Enabled School Operations</p>
+              <h2 id="heroTitle">Welcome to The Scholar Kids Staff Portal</h2>
+              <p class="lead">
+                <span id="heroLead">Teachers aur school staff yahan se login karke admissions, attendance, results, fees, notices aur timetable ka kaam
+                mobile ya computer dono par kar sakte hain. Smart tools aap ke daily tasks ko tez aur accurate banate hain.</span>
+              </p>
+              <div class="hero-badges">
+                <span id="badgeAi">AI Assisted Entries</span>
+                <span id="badgeUrdu">Urdu + English Friendly</span>
+                <span id="badgeMobile">Mobile Ready</span>
+                <span id="badgeSecure">Secure Records</span>
+              </div>
+              <div class="cta-row">
+                <button type="button" data-portal-page-btn="portal" id="heroCtaPrimary">Open Operations Login</button>
+                <button type="button" class="secondary-btn" data-portal-page-btn="notices" id="heroCtaSecondary">View School Notices</button>
+              </div>
+            </section>
+
+            <section>
+              <h2 id="coreFeaturesTitle">Core Features</h2>
+              <div class="service-grid">
+                <article class="service-card">
+                  <h3>Admissions</h3>
+                  <p>Digital admission records with parent, student and class details.</p>
+                </article>
+                <article class="service-card">
+                  <h3>Attendance Tracking</h3>
+                  <p>Daily attendance with class filters, late/absent status, and quick updates.</p>
+                </article>
+                <article class="service-card">
+                  <h3>Results Management</h3>
+                  <p>Exam and subject wise results with grades and class record view.</p>
+                </article>
+                <article class="service-card">
+                  <h3>Fees & Vouchers</h3>
+                  <p>Fee records, auto generation, and printable student vouchers.</p>
+                </article>
+                <article class="service-card">
+                  <h3>Notices & Timetable</h3>
+                  <p>School notices and timetable scheduling with fast publishing.</p>
+                </article>
+                <article class="service-card">
+                  <h3>Smart Records</h3>
+                  <p>AI assisted B-Form photo capture and organized student records.</p>
+                </article>
+              </div>
+            </section>
+
+            <section class="home-highlight">
+              <h2 id="whyChooseTitle">Why Schools Choose Us</h2>
+              <div class="stat-grid">
+                <article class="stat-card">
+                  <p class="stat-value">1</p>
+                  <p class="stat-title">Unified Dashboard</p>
+                  <p class="stat-body">Admissions, attendance, results, fees, notices and timetable in one place.</p>
+                </article>
+                <article class="stat-card">
+                  <p class="stat-value">AI</p>
+                  <p class="stat-title">Smart Data Entry</p>
+                  <p class="stat-body">B-Form photo extraction and quick auto-fill help reduce manual work.</p>
+                </article>
+                <article class="stat-card">
+                  <p class="stat-value">24/7</p>
+                  <p class="stat-title">Mobile Access</p>
+                  <p class="stat-body">Works on phone, tablet, or computer for staff operations.</p>
+                </article>
+              </div>
+            </section>
+          </div>
+
+          <div class="portal-page" data-portal-page="services">
+            <section>
+              <h2>PakEducate-Style Feature Set</h2>
+              <p class="helper-text">
+                Ye portal school staff ke liye tayar kiya gaya hai. Full operations authorized login ke baad available hotay hain.
+              </p>
+              <div class="feature-grid">
+                <article class="feature-card">
+                  <h3>Student Management</h3>
+                  <p>Admission number, class placement, B-Form details and contact records.</p>
+                  <ul class="feature-tags">
+                    <li>Profiles</li>
+                    <li>Class History</li>
+                    <li>Guardian Data</li>
+                  </ul>
+                </article>
+                <article class="feature-card">
+                  <h3>Attendance & Alerts</h3>
+                  <p>Daily attendance marking, quick class filters, and absent alerts.</p>
+                  <ul class="feature-tags">
+                    <li>Present/Late</li>
+                    <li>Daily Summary</li>
+                    <li>Alerts</li>
+                  </ul>
+                </article>
+                <article class="feature-card">
+                  <h3>Results & Report Cards</h3>
+                  <p>Subject templates, exam-wise marks entry, and printable result cards.</p>
+                  <ul class="feature-tags">
+                    <li>Templates</li>
+                    <li>Grades</li>
+                    <li>PDF Print</li>
+                  </ul>
+                </article>
+                <article class="feature-card">
+                  <h3>Fees & Vouchers</h3>
+                  <p>Fee setup, auto-generated totals, and printable vouchers.</p>
+                  <ul class="feature-tags">
+                    <li>Monthly Dues</li>
+                    <li>Vouchers</li>
+                    <li>Defaulters</li>
+                  </ul>
+                </article>
+                <article class="feature-card">
+                  <h3>Notices & Timetable</h3>
+                  <p>School-wide notices and class timetables with quick updates.</p>
+                  <ul class="feature-tags">
+                    <li>Notice Board</li>
+                    <li>Schedules</li>
+                    <li>Publishing</li>
+                  </ul>
+                </article>
+                <article class="feature-card">
+                  <h3>AI Assisted Workflow</h3>
+                  <p>Auto-fill from B-Form photos and quick form handling for staff.</p>
+                  <ul class="feature-tags">
+                    <li>OCR</li>
+                    <li>Smart Forms</li>
+                    <li>Time Saver</li>
+                  </ul>
+                </article>
+              </div>
+            </section>
+          </div>
+
+          <div class="portal-page" data-portal-page="notices">
+            <section>
+              <h2>School Notice Board</h2>
+              <p class="helper-text">Latest school updates aur instructions yahan show hongi.</p>
+              <ul id="publicNoticeList" class="public-notice-list">
+                <li>No public notices available yet.</li>
+              </ul>
+            </section>
+          </div>
+
+          <div class="portal-page" data-portal-page="portal">
+            <section class="hero-panel">
+              <p class="eyebrow">Private School Operations Area</p>
+              <h2>Staff Operations Dashboard</h2>
+              <p class="lead">
+                Login ke baad teachers aur admin complete school modules access kar sakte hain including admissions, attendance,
+                results, fees and timetable.
+              </p>
+            </section>
+
+            <section class="dashboard requires-auth" id="dashboardCards">
+              <div class="card">
+                <h3>Total Students</h3>
+                <p id="totalStudents">0</p>
+              </div>
+              <div class="card">
+                <h3>Today Present</h3>
+                <p id="todayPresent">0</p>
+              </div>
+              <div class="card admin-only">
+                <h3>Total Fee Due</h3>
+                <p id="totalDue">0</p>
+              </div>
+              <div class="card">
+                <h3>Result Entries</h3>
+                <p id="resultEntries">0</p>
+              </div>
+              <div class="card">
+                <h3>Notices</h3>
+                <p id="noticeCount">0</p>
+              </div>
+              <div class="card">
+                <h3>Timetable Slots</h3>
+                <p id="timetableCount">0</p>
+              </div>
+            </section>
+
+            <main>
+              <section class="requires-auth" id="workspace">
+                <h2>Class Workspace (Column View)</h2>
+                <p class="helper-text">Class select karein. Attendance, Result aur Fee forms mein class auto-set ho jayegi.</p>
+                <div id="classColumns" class="class-columns"></div>
+              </section>
+
+              <section id="access">
+                <h2>0) Access</h2>
+                <form id="loginForm" class="grid-form">
+                  <input type="text" name="username" placeholder="Username" required />
+                  <input type="password" name="password" placeholder="Password" required />
+                  <button type="submit">Login</button>
+                </form>
+
+                <div class="filter-bar single-line auth-strip">
+                  <input id="currentUser" value="Not logged in" readonly />
+                  <input id="authMode" value="Please login" readonly />
+                  <button id="logoutBtn" type="button">Logout</button>
+                </div>
+
+                <form id="userForm" class="grid-form admin-only requires-auth">
+                  <input type="text" name="username" placeholder="New Teacher Username" required />
+                  <input type="password" name="password" placeholder="Password (min 6 chars)" required />
+                  <select name="role" required>
+                    <option value="Teacher">Teacher</option>
+                    <option value="Admin">Admin</option>
+                  </select>
+                  <button type="submit">Create User</button>
+                </form>
+                <div id="authMsg" class="msg"></div>
+              </section>
+
+              <section class="admin-only requires-auth" id="admissions">
+                <h2>1) Admission Module</h2>
+                <form id="admissionForm" class="grid-form">
+                  <input type="text" name="fullName" placeholder="Student Full Name" required />
+                  <select name="className" required></select>
+                  <input type="text" name="section" placeholder="Section (A/B)" />
+                  <select name="gender">
+                    <option value="">Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <input type="date" name="dob" />
+                  <input type="text" name="bFormNo" placeholder="B-Form Number" />
+                  <input type="file" id="bFormPhoto" accept="image/*" />
+                  <button type="button" id="extractFromPhotoBtn">Auto Fill from B-Form Photo</button>
+                  <input type="text" name="parentName" placeholder="Parent Name" />
+                  <input type="text" name="phone" placeholder="Phone Number" />
+                  <input type="number" step="0.01" name="feeDiscount" placeholder="Monthly Discount (Rs)" />
+                  <input type="date" name="admissionDate" required />
+                  <textarea name="address" placeholder="Address"></textarea>
+                  <button type="submit">Save Admission</button>
+                  <button type="button" id="cancelAdmissionEditBtn" class="secondary-btn" hidden>Cancel Edit</button>
+                </form>
+                <div id="admissionMsg" class="msg"></div>
+              </section>
+
+              <section class="requires-auth" id="attendance">
+                <h2>2) Attendance Module</h2>
+                <div class="attendance-alert-strip admin-only">
+                  <label class="toggle-row" for="absenceNotificationsToggle">
+                    <span>Absent Student Notifications</span>
+                    <input type="checkbox" id="absenceNotificationsToggle" />
+                  </label>
+                  <p id="absenceNotificationStatus" class="helper-text">Off. Turn on to get absent student alerts in the app.</p>
+                </div>
+                <form id="attendanceForm" class="grid-form">
+                  <select name="className" id="attendanceClass" required></select>
+                  <select name="studentId" id="attendanceStudent" required></select>
+                  <input type="date" name="attendanceDate" required />
+                  <select name="status" required>
+                    <option value="Present">Present</option>
+                    <option value="Absent">Absent</option>
+                    <option value="Late">Late</option>
+                  </select>
+                  <input type="text" name="remarks" placeholder="Remarks" />
+                  <button type="submit">Mark Attendance</button>
+                  <button type="button" id="cancelAttendanceEditBtn" class="secondary-btn" hidden>Cancel Edit</button>
+                </form>
+                <div id="attendanceMsg" class="msg"></div>
+                <div class="filter-bar single-line">
+                  <select id="attendanceClassFilter"></select>
+                  <input type="date" id="attendanceDateFilter" />
+                  <button type="button" id="loadAttendanceBtn">Load Class Attendance</button>
+                </div>
+                <table id="attendanceTable">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Class</th>
+                      <th>Student</th>
+                      <th>Status</th>
+                      <th>Remarks</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </section>
+
+              <section class="requires-auth" id="paper">
+                <h2>2-B) Paper Creator</h2>
+                <p class="helper-text">Paper yahan type/paste karein. Header mein school name aur logo auto-add ho jayega.</p>
+                <form id="paperForm" class="grid-form">
+                  <input type="text" name="paperTitle" placeholder="Paper Title (e.g. Midterm Exam)" required />
+                  <select name="className" id="paperClass" required></select>
+                  <input type="text" name="subject" placeholder="Subject" />
+                  <input type="date" name="paperDate" />
+                  <input type="text" name="duration" placeholder="Time/Duration (e.g. 45 minutes)" />
+                  <textarea name="instructions" placeholder="Instructions (optional)"></textarea>
+                  <textarea name="paperBody" id="paperBody" placeholder="Write or paste paper content here..." required></textarea>
+                  <button type="submit">Generate Paper</button>
+                  <button type="button" id="savePaperBtn" class="secondary-btn" disabled>Save PDF</button>
+                  <button type="button" id="printPaperBtn" class="secondary-btn" disabled>Print Paper</button>
+                </form>
+                <div id="paperMsg" class="msg"></div>
+                <div id="paperPreview" class="paper-preview"></div>
+                <div id="paperPrintArea" class="print-area paper-print-area" aria-hidden="true"></div>
+              </section>
+
+              <section class="requires-auth" id="results">
+                <h2>3) Result Record Module</h2>
+                <div class="result-card-builder">
+                  <div class="section-topline">
+                    <div>
+                      <h3>Class Subject Setup</h3>
+                      <p class="helper-text">Har class ke subjects aik dafa save karein. Format: `Urdu|100` ya sirf `Urdu`.</p>
+                    </div>
+                  </div>
+                  <form id="resultTemplateForm" class="grid-form">
+                    <select name="className" id="resultTemplateClass" required></select>
+                    <textarea name="subjectLines" id="resultTemplateLines" placeholder="Urdu|100&#10;Math|100&#10;English|100" required></textarea>
+                    <button type="submit">Save Class Subjects</button>
+                  </form>
+                  <div id="resultTemplateMsg" class="msg"></div>
+                </div>
+
+                <div class="result-card-builder">
+                  <div class="section-topline">
+                    <div>
+                      <h3>Fast Marks Entry</h3>
+                      <p class="helper-text">Class aur student select karte hi saved subjects aa jayenge. Sirf marks enter karke ek hi dafa save karein.</p>
+                    </div>
+                  </div>
+                  <form id="bulkResultForm" class="grid-form">
+                    <select name="className" id="bulkResultClass" required></select>
+                    <select name="studentId" id="bulkResultStudent" required></select>
+                    <input type="text" name="examName" id="bulkResultExamName" placeholder="Exam Name" required />
+                    <button type="submit">Save All Marks</button>
+                  </form>
+                  <div id="bulkResultRows" class="bulk-result-rows"></div>
+                  <div id="bulkResultMsg" class="msg"></div>
+                </div>
+
+                <form id="resultForm" class="grid-form">
+                  <select name="className" id="resultClass" required></select>
+                  <select name="studentId" id="resultStudent" required></select>
+                  <input type="text" name="examName" placeholder="Exam Name" required />
+                  <input type="text" name="subject" placeholder="Subject" required />
+                  <input type="number" name="maxMarks" placeholder="Max Marks" required />
+                  <input type="number" name="obtainedMarks" placeholder="Obtained Marks" required />
+                  <input type="text" name="remarks" placeholder="Remarks" />
+                  <button type="submit">Save Result</button>
+                  <button type="button" id="cancelResultEditBtn" class="secondary-btn" hidden>Cancel Edit</button>
+                </form>
+                <div id="resultMsg" class="msg"></div>
+                <div class="filter-bar single-line">
+                  <select id="resultClassFilter"></select>
+                  <input type="text" id="resultExamFilter" placeholder="Filter Exam Name (optional)" />
+                  <button type="button" id="loadResultBtn">Load Class Results</button>
+                </div>
+                <table id="resultsTable">
+                  <thead>
+                    <tr>
+                      <th>Class</th>
+                      <th>Student</th>
+                      <th>Exam</th>
+                      <th>Subject</th>
+                      <th>Marks</th>
+                      <th>Grade</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+
+                <div class="result-card-builder">
+                  <div class="section-topline">
+                    <div>
+                      <h3>Professional Result Card</h3>
+                      <p class="helper-text">Student aur exam select karein. Saved marks se stylish result card auto-generate ho jayega.</p>
+                    </div>
+                    <button type="button" id="saveResultCardBtn" class="secondary-btn" disabled>Save Result Card</button>
+                  </div>
+                  <form id="resultCardForm" class="grid-form">
+                    <select name="className" id="resultCardClass" required></select>
+                    <select name="studentId" id="resultCardStudent" required></select>
+                    <select name="examName" id="resultCardExam" required>
+                      <option value="">Select Student First</option>
+                    </select>
+                    <button type="submit">Generate Result Card</button>
+                    <button type="button" id="oneClickResultBtn" class="secondary-btn">One-Click Result</button>
+                    <button type="button" id="printResultCardBtn" class="secondary-btn" disabled>Print Result Card</button>
+                  </form>
+                  <div id="resultCardMsg" class="msg"></div>
+                  <div id="resultCardPreview" class="result-card-preview"></div>
+                </div>
+              </section>
+
+              <section class="requires-auth" id="syllabus">
+                <h2>3-B) Syllabus Module</h2>
+                <div class="result-card-builder">
+                  <div class="section-topline">
+                    <div>
+                      <h3>Class Term Syllabus</h3>
+                      <p class="helper-text">Har class ke liye term syllabus aik dafa save karein. Har subject ka apna box hai.</p>
+                    </div>
+                  </div>
+                  <form id="syllabusTemplateForm" class="grid-form">
+                    <select name="className" id="syllabusTemplateClass" required></select>
+                    <input type="text" name="termName" id="syllabusTemplateTerm" placeholder="Term Name (e.g. Term 1)" required />
+                    <div id="syllabusTemplateFields" class="syllabus-fields"></div>
+                    <button type="submit">Save Term Syllabus</button>
+                  </form>
+                  <div id="syllabusTemplateMsg" class="msg"></div>
+                </div>
+
+                <div class="result-card-builder">
+                  <div class="section-topline">
+                    <div>
+                      <h3>Student Syllabus</h3>
+                      <p class="helper-text">Student select karein. Syllabus auto-generate ho jayega. Save ya print karke parents ko bhej sakte hain.</p>
+                    </div>
+                    <button type="button" id="saveSyllabusBtn" class="secondary-btn" disabled>Save Syllabus</button>
+                  </div>
+                  <form id="syllabusForm" class="grid-form">
+                    <select name="className" id="syllabusClass" required></select>
+                    <select name="studentId" id="syllabusStudent" required></select>
+                    <input type="text" name="termName" id="syllabusTerm" placeholder="Term Name (e.g. Term 1)" required />
+                    <button type="submit">Generate Syllabus</button>
+                    <button type="button" id="printSyllabusBtn" class="secondary-btn" disabled>Print Syllabus</button>
+                  </form>
+                  <div id="syllabusMsg" class="msg"></div>
+                  <div id="syllabusPreview" class="syllabus-preview"></div>
+                </div>
+              </section>
+
+              <section class="admin-only requires-auth" id="fees">
+                <h2>4) Fee Record Module</h2>
+                <form id="feeForm" class="grid-form">
+                  <select name="className" id="feeClass" required></select>
+                  <select name="studentId" id="feeStudent" required></select>
+                  <input type="month" name="feeMonth" placeholder="Fee Month (optional)" />
+                  <input type="number" step="0.01" id="feeTotalAmount" name="totalAmount" placeholder="Total Amount (editable)" />
+                  <input type="number" step="0.01" name="paidAmount" placeholder="Paid Amount" required />
+                  <input type="date" name="paymentDate" />
+                  <input type="text" name="paymentMode" placeholder="Payment Mode (Cash/Online)" />
+                  <input type="text" name="remarks" placeholder="Remarks" />
+                  <button type="submit">Save Fee Record</button>
+                  <button type="button" id="cancelFeeEditBtn" class="secondary-btn" hidden>Cancel Edit</button>
+                  <button type="button" id="autoGenerateFeeBtn">Auto Generate Class Fee</button>
+                </form>
+                <div id="feeMsg" class="msg"></div>
+              </section>
+
+              <section class="admin-only requires-auth" id="voucher">
+                <h2>4-B) Student Fee Voucher</h2>
+                <p class="helper-text">Teesre box mein Fee Month select karein (month picker). Record mojood hoga to voucher auto-generate ho jayega.</p>
+                <form id="voucherForm" class="grid-form">
+                  <select name="className" id="voucherClass" required></select>
+                  <select name="studentId" id="voucherStudent" required></select>
+                  <input type="month" name="feeMonth" title="Select Fee Month" placeholder="Select Fee Month" required />
+                  <button type="submit">Generate Voucher</button>
+                </form>
+                <div class="voucher-actions">
+                  <button type="button" id="saveVoucherBtn" disabled>Save PDF</button>
+                  <button type="button" id="saveClassVoucherBtn" disabled>Save Class PDF</button>
+                  <button type="button" id="printVoucherBtn" disabled>Print Voucher</button>
+                </div>
+                <div id="voucherMsg" class="msg"></div>
+                <div id="voucherPreview" class="voucher-preview"></div>
+                <div id="voucherPrintArea" class="print-area voucher-print-area" aria-hidden="true"></div>
+              </section>
+
+              <section class="admin-only requires-auth" id="accounts">
+                <h2>4-C) Income & Expenses</h2>
+                <p class="helper-text">Daily kharcha yahan add karein. Income fees se auto calculate hoti hai.</p>
+                <div class="stat-grid finance-summary-grid">
+                  <div class="stat-card finance-summary-card">
+                    <div class="stat-title">Income (Selected Month)</div>
+                    <div class="stat-value" id="incomeSummaryValue">Rs. 0</div>
+                    <p class="stat-body" id="incomeSummaryMeta">0 paid records</p>
+                  </div>
+                  <div class="stat-card finance-summary-card">
+                    <div class="stat-title">Expenses (Selected Month)</div>
+                    <div class="stat-value" id="expenseSummaryValue">Rs. 0</div>
+                    <p class="stat-body" id="expenseSummaryMeta">0 entries</p>
+                  </div>
+                  <div class="stat-card finance-summary-card">
+                    <div class="stat-title">Remaining Balance (Month)</div>
+                    <div class="stat-value" id="netSummaryValue">Rs. 0</div>
+                    <p class="stat-body" id="netSummaryMeta">Income - Expenses</p>
+                  </div>
+                </div>
+                <div class="stat-grid finance-summary-grid">
+                  <div class="stat-card finance-summary-card">
+                    <div class="stat-title">Total Expenses (All Time)</div>
+                    <div class="stat-value" id="allTimeExpenseValue">Rs. 0</div>
+                    <p class="stat-body" id="allTimeExpenseMeta">All records</p>
+                  </div>
+                  <div class="stat-card finance-summary-card">
+                    <div class="stat-title">Remaining Balance (All Time)</div>
+                    <div class="stat-value" id="allTimeNetValue">Rs. 0</div>
+                    <p class="stat-body" id="allTimeNetMeta">Total income - expenses</p>
+                  </div>
+                </div>
+                <div class="filter-bar admin-only">
+                  <input type="month" id="expenseMonthFilter" />
+                  <button type="button" id="loadExpensesBtn">Load Expenses</button>
+                </div>
+                <form id="expenseForm" class="grid-form">
+                  <input type="date" name="expenseDate" required />
+                  <input type="text" name="category" placeholder="Category (e.g. Stationery)" required />
+                  <input type="number" step="0.01" name="amount" placeholder="Amount" required />
+                  <input type="text" name="paymentMode" placeholder="Payment Mode (Cash/Online)" />
+                  <input type="text" name="remarks" placeholder="Remarks" />
+                  <button type="submit">Save Expense</button>
+                </form>
+                <div class="bulk-expense">
+                  <p class="helper-text">Bulk add: Har line mein sirf `date? category amount` bhi chalega. Date optional. Amount hamesha last mein ho.</p>
+                  <textarea id="bulkExpenseInput" placeholder="2026-04-10 Stationery 450\nDiesel 1200\n2026-04-10 Fan repair 800"></textarea>
+                  <button type="button" id="saveBulkExpensesBtn">Save Bulk Expenses</button>
+                </div>
+                <div id="expenseMsg" class="msg"></div>
+                <div class="table-scroll">
+                  <table id="expensesTable">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                        <th>Mode</th>
+                        <th>Remarks</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td colspan="5">No expenses yet.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section class="admin-only requires-auth" id="notices">
+                <h2>5) Notice Board Module</h2>
+                <form id="noticeForm" class="grid-form">
+                  <input type="text" name="title" placeholder="Notice Title" required />
+                  <select name="audience" required>
+                    <option value="All">All</option>
+                    <option value="Students">Students</option>
+                    <option value="Teachers">Teachers</option>
+                    <option value="Parents">Parents</option>
+                  </select>
+                  <input type="date" name="publishDate" required />
+                  <textarea name="body" placeholder="Notice details likhein..." required></textarea>
+                  <button type="submit">Publish Notice</button>
+                  <button type="button" id="cancelNoticeEditBtn" class="secondary-btn" hidden>Cancel Edit</button>
+                </form>
+                <div id="noticeMsg" class="msg"></div>
+              </section>
+
+              <section class="admin-only requires-auth" id="timetable">
+                <h2>6) Timetable Module</h2>
+                <form id="timetableForm" class="grid-form">
+                  <select name="className" required></select>
+                  <input type="text" name="section" placeholder="Section (A/B)" />
+                  <select name="weekday" required>
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                  </select>
+                  <input type="text" name="periodName" placeholder="Period (e.g. 1st)" required />
+                  <input type="text" name="subject" placeholder="Subject" required />
+                  <input type="text" name="teacherName" placeholder="Teacher Name" />
+                  <input type="time" name="startTime" />
+                  <input type="time" name="endTime" />
+                  <button type="submit">Save Timetable</button>
+                  <button type="button" id="cancelTimetableEditBtn" class="secondary-btn" hidden>Cancel Edit</button>
+                </form>
+                <div id="timetableMsg" class="msg"></div>
+              </section>
+
+              <section class="requires-auth" id="records">
+                <h2>Recent Records</h2>
+                <div class="stat-grid fee-summary-grid admin-only" id="feeSummaryGrid">
+                  <div class="stat-card fee-summary-card">
+                    <div class="stat-title">Paid (Selected Month)</div>
+                    <div class="stat-value" id="summaryPaidTotal">Rs. 0</div>
+                    <p class="stat-body" id="summaryPaidCount">0 paid records</p>
+                  </div>
+                  <div class="stat-card fee-summary-card">
+                    <div class="stat-title">Due (Selected Month)</div>
+                    <div class="stat-value" id="summaryDueTotal">Rs. 0</div>
+                    <p class="stat-body" id="summaryDefaulterCount">0 defaulters</p>
+                  </div>
+                  <div class="stat-card fee-summary-card">
+                    <div class="stat-title">Selected Class</div>
+                    <div class="stat-value" id="summaryClassLabel">All Classes</div>
+                    <p class="stat-body" id="summaryMonthLabel">Month: -</p>
+                  </div>
+                </div>
+                <div class="filter-bar">
+                  <select id="studentClassFilter"></select>
+                  <input type="text" id="studentSearch" placeholder="Search Student (Name / Admission No / B-Form)" />
+                  <select id="feeClassFilter" class="admin-only"></select>
+                </div>
+                <div class="filter-bar admin-only">
+                  <select id="defaulterClassFilter"></select>
+                  <input type="month" id="defaulterMonthFilter" />
+                  <button type="button" id="loadDefaultersBtn">Load Fee Defaulters</button>
+                </div>
+                <div class="filter-bar admin-only">
+                  <select id="paidClassFilter"></select>
+                  <input type="month" id="paidMonthFilter" />
+                  <button type="button" id="loadPaidFeesBtn">Load Fee Paid</button>
+                </div>
+                <div id="defaultersMsg" class="msg admin-only"></div>
+                <div id="paidFeesMsg" class="msg admin-only"></div>
+                <div class="section-topline">
+                  <p class="helper-text">Jo records screen par nazar aa rahe hain unhein kisi bhi waqt file ki shakal mein save kar sakte hain.</p>
+                  <button type="button" id="saveRecordsBtn" class="secondary-btn">Save Records File</button>
+                </div>
+                <div id="recordsMsg" class="msg"></div>
+                <div class="tables">
+                  <div>
+                    <h3>Students</h3>
+                    <table id="studentsTable">
+                      <thead>
+                        <tr>
+                          <th>Admission No</th>
+                          <th>Name</th>
+                          <th>B-Form</th>
+                          <th>Class</th>
+                          <th>Phone</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                  <div class="admin-only">
+                    <h3>Fee Records</h3>
+                    <table id="feesTable">
+                      <thead>
+                        <tr>
+                          <th>Student</th>
+                          <th>Class</th>
+                          <th>Month</th>
+                          <th>Paid</th>
+                          <th>Due</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                  <div class="admin-only">
+                    <h3>Fee Defaulters</h3>
+                    <table id="defaultersTable">
+                      <thead>
+                        <tr>
+                          <th>Student</th>
+                          <th>Class</th>
+                          <th>Phone</th>
+                          <th>Last Month</th>
+                          <th>Total Due</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                  <div class="admin-only">
+                    <h3>Fee Paid</h3>
+                    <table id="paidFeesTable">
+                      <thead>
+                        <tr>
+                          <th>Student</th>
+                          <th>Class</th>
+                          <th>Month</th>
+                          <th>Paid</th>
+                          <th>Payment Date</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                  <div>
+                    <h3>Notices</h3>
+                    <table id="noticesTable">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Title</th>
+                          <th>Details</th>
+                          <th>Audience</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                  <div>
+                    <h3>Timetable</h3>
+                    <table id="timetableTable">
+                      <thead>
+                        <tr>
+                          <th>Day</th>
+                          <th>Class</th>
+                          <th>Period</th>
+                          <th>Subject</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+              </section>
+            </main>
+          </div>
+        </div>
+      </div>
+
+      <footer class="portal-footer">
+        <div class="footer-grid">
+          <div>
+            <h3>The Scholar Kids School</h3>
+            <p>Digital education services portal for school operations and parent communication.</p>
+          </div>
+          <div>
+            <h3>Public Links</h3>
+            <p>Home, Services, School Notices, Staff Login</p>
+          </div>
+          <div>
+            <h3>Contact</h3>
+            <p>Help Desk: #03111652325</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
