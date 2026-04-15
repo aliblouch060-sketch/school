@@ -356,6 +356,17 @@
                   <button type="submit">Mark Attendance</button>
                   <button type="button" id="cancelAttendanceEditBtn" class="secondary-btn" hidden>Cancel Edit</button>
                 </form>
+                <form id="attendanceBulkForm" class="grid-form attendance-bulk-form">
+                  <select name="className" id="attendanceBulkClass" required></select>
+                  <input type="date" name="attendanceDate" id="attendanceBulkDate" required />
+                  <select name="status" id="attendanceBulkStatus" required>
+                    <option value="Present">Present</option>
+                    <option value="Absent">Absent</option>
+                    <option value="Late">Late</option>
+                  </select>
+                  <input type="text" name="remarks" id="attendanceBulkRemarks" placeholder="Remarks for full class (optional)" />
+                  <button type="submit">Mark Full Class Attendance</button>
+                </form>
                 <div id="attendanceMsg" class="msg"></div>
                 <div class="filter-bar single-line">
                   <select id="attendanceClassFilter"></select>
@@ -375,6 +386,50 @@
                   </thead>
                   <tbody></tbody>
                 </table>
+                <div class="attendance-monthly-panel">
+                  <h3>Monthly Attendance Summary</h3>
+                  <p class="helper-text">Month end par class-wise aur student-wise attendance percentage yahan se generate karein.</p>
+                  <div class="filter-bar single-line">
+                    <input type="month" id="attendanceMonthFilter" />
+                    <select id="attendanceSummaryClassFilter"></select>
+                    <button type="button" id="loadAttendanceSummaryBtn">Generate Monthly Summary</button>
+                    <button type="button" id="saveAttendanceSummaryBtn" class="secondary-btn" disabled>Save Monthly Report File</button>
+                    <button type="button" id="printAttendanceSummaryBtn" class="secondary-btn" disabled>Print / Save PDF</button>
+                  </div>
+                  <div id="attendanceSummaryMsg" class="msg"></div>
+                  <p id="attendanceSummaryMeta" class="helper-text"></p>
+                  <table id="attendanceClassSummaryTable">
+                    <thead>
+                      <tr>
+                        <th>Class</th>
+                        <th>Students</th>
+                        <th>Working Days</th>
+                        <th>Marked Days</th>
+                        <th>Absent</th>
+                        <th>Late</th>
+                        <th>Not Marked</th>
+                        <th>Attendance %</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                  <table id="attendanceStudentSummaryTable">
+                    <thead>
+                      <tr>
+                        <th>Student</th>
+                        <th>Class</th>
+                        <th>Admission No</th>
+                        <th>Working Days</th>
+                        <th>Present</th>
+                        <th>Absent</th>
+                        <th>Late</th>
+                        <th>Not Marked</th>
+                        <th>Attendance %</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
               </section>
 
               <section class="requires-auth" id="paper">

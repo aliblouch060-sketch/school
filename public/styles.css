@@ -506,6 +506,26 @@ section {
   margin: 0;
 }
 
+.attendance-monthly-panel {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #d7e3dc;
+}
+
+.attendance-bulk-form {
+  margin-top: 10px;
+  margin-bottom: 6px;
+  background: #f8fbf9;
+}
+
+.attendance-monthly-panel h3 {
+  margin: 0 0 8px;
+}
+
+.attendance-monthly-panel table + table {
+  margin-top: 14px;
+}
+
 .attendance-row.status-absent td {
   background: #ffe8e8;
   color: #8b1b1b;
@@ -520,6 +540,11 @@ section {
 .attendance-row.status-late td {
   background: #fff3dc;
   color: #8a4b00;
+}
+
+.attendance-row.status-not-marked td {
+  background: #f4f6f8;
+  color: #4c5b66;
 }
 
 .status-pill {
@@ -550,6 +575,12 @@ section {
   background: #ffe8c5;
   color: #8a4b00;
   border: 1px solid #f3c37e;
+}
+
+.status-pill.status-not-marked {
+  background: #edf1f5;
+  color: #4c5b66;
+  border: 1px solid #d2dbe3;
 }
 
 .toggle-row {

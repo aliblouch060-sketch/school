@@ -1,6 +1,7 @@
 require('./load-env');
 
 const express = require('express');
+const fs = require('fs/promises');
 const path = require('path');
 const { spawn } = require('child_process');
 const bcrypt = require('bcryptjs');
@@ -134,6 +135,179 @@ function computeGrade(obtainedMarks, maxMarks) {
   if (percentage >= 60) return 'C';
   if (percentage >= 50) return 'D';
   return 'F';
+}
+
+function normalizeMonthKey(input) {
+  const value = String(input || '').trim();
+  if (!/^\d{4}-\d{2}$/.test(value)) {
+    throw new Error('Month format YYYY-MM hona chahiye.');
+  }
+
+  const [yearPart, monthPart] = value.split('-');
+  const year = Number(yearPart);
+  const month = Number(monthPart);
+  if (!year || month < 1 || month > 12) {
+    throw new Error('Invalid month selected.');
+  }
+
+  return `${yearPart}-${monthPart}`;
+}
+
+function getMonthDateRange(monthKey) {
+  const [yearPart, monthPart] = monthKey.split('-');
+  const year = Number(yearPart);
+  const month = Number(monthPart);
+  const startDate = `${monthKey}-01`;
+  const endDate = new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
+  return { startDate, endDate };
+}
+
+function compareClassOrder(a, b) {
+  return ALLOWED_CLASSES.indexOf(a) - ALLOWED_CLASSES.indexOf(b);
+}
+
+function roundPercentage(value) {
+  return Number(Number(value || 0).toFixed(2));
+}
+
+async function buildMonthlyAttendanceSummary({ month, className }) {
+  const monthKey = normalizeMonthKey(month);
+  const normalizedClass = normalizeClassName(className);
+  const { startDate, endDate } = getMonthDateRange(monthKey);
+
+  let studentSql = `
+    SELECT id, admission_no, full_name, class_name, section, admission_date
+    FROM students
+    WHERE admission_date <= ?`;
+  const studentParams = [endDate];
+
+  if (normalizedClass) {
+    studentSql += ' AND class_name = ?';
+    studentParams.push(normalizedClass);
+  }
+
+  studentSql += ' ORDER BY class_name, full_name';
+  const students = await all(studentSql, studentParams);
+
+  let attendanceSql = `
+    SELECT a.student_id, a.attendance_date, a.status, s.class_name
+    FROM attendance a
+    JOIN students s ON s.id = a.student_id
+    WHERE a.attendance_date BETWEEN ? AND ?`;
+  const attendanceParams = [startDate, endDate];
+
+  if (normalizedClass) {
+    attendanceSql += ' AND s.class_name = ?';
+    attendanceParams.push(normalizedClass);
+  }
+
+  const attendanceRows = await all(attendanceSql, attendanceParams);
+  const attendanceByStudentDate = new Map();
+  const workingDaysByClass = new Map();
+
+  for (const row of attendanceRows) {
+    const studentKey = `${row.student_id}:${row.attendance_date}`;
+    attendanceByStudentDate.set(studentKey, row.status);
+
+    const classKey = row.class_name || '';
+    if (!workingDaysByClass.has(classKey)) {
+      workingDaysByClass.set(classKey, new Set());
+    }
+    workingDaysByClass.get(classKey).add(row.attendance_date);
+  }
+
+  const studentsByClass = new Map();
+  for (const student of students) {
+    const classKey = student.class_name || '';
+    if (!studentsByClass.has(classKey)) {
+      studentsByClass.set(classKey, []);
+    }
+    studentsByClass.get(classKey).push(student);
+  }
+
+  const orderedClasses = Array.from(studentsByClass.keys()).sort(compareClassOrder);
+  const classSummaries = [];
+  const studentSummaries = [];
+
+  for (const classKey of orderedClasses) {
+    const classStudents = studentsByClass.get(classKey) || [];
+    const workingDays = Array.from(workingDaysByClass.get(classKey) || []).sort();
+    let classPossibleDays = 0;
+    let classPresentEquivalent = 0;
+    let classMarkedDays = 0;
+    let classAbsentDays = 0;
+    let classLateDays = 0;
+    let classNotMarkedDays = 0;
+
+    for (const student of classStudents) {
+      const eligibleDays = workingDays.filter((day) => day >= student.admission_date);
+      let presentDays = 0;
+      let absentDays = 0;
+      let lateDays = 0;
+      let notMarkedDays = 0;
+
+      for (const day of eligibleDays) {
+        const status = attendanceByStudentDate.get(`${student.id}:${day}`);
+        if (status === 'Present') presentDays += 1;
+        else if (status === 'Late') lateDays += 1;
+        else if (status === 'Absent') absentDays += 1;
+        else notMarkedDays += 1;
+      }
+
+      const workingDayCount = eligibleDays.length;
+      const presentEquivalentDays = presentDays + lateDays;
+      const markedDays = presentDays + lateDays + absentDays;
+      const attendancePercentage = workingDayCount ? roundPercentage((presentEquivalentDays / workingDayCount) * 100) : 0;
+
+      classPossibleDays += workingDayCount;
+      classPresentEquivalent += presentEquivalentDays;
+      classMarkedDays += markedDays;
+      classAbsentDays += absentDays;
+      classLateDays += lateDays;
+      classNotMarkedDays += notMarkedDays;
+
+      studentSummaries.push({
+        studentId: student.id,
+        admissionNo: student.admission_no,
+        fullName: student.full_name,
+        className: student.class_name,
+        section: student.section || '',
+        admissionDate: student.admission_date,
+        workingDays: workingDayCount,
+        presentDays,
+        absentDays,
+        lateDays,
+        notMarkedDays,
+        markedDays,
+        attendancePercentage,
+      });
+    }
+
+    classSummaries.push({
+      className: classKey,
+      totalStudents: classStudents.length,
+      workingDays: workingDays.length,
+      totalPossibleDays: classPossibleDays,
+      markedDays: classMarkedDays,
+      presentEquivalentDays: classPresentEquivalent,
+      absentDays: classAbsentDays,
+      lateDays: classLateDays,
+      notMarkedDays: classNotMarkedDays,
+      attendancePercentage: classPossibleDays ? roundPercentage((classPresentEquivalent / classPossibleDays) * 100) : 0,
+    });
+  }
+
+  return {
+    month: monthKey,
+    startDate,
+    endDate,
+    className: normalizedClass || '',
+    generatedAt: new Date().toISOString(),
+    totalStudents: studentSummaries.length,
+    totalClasses: classSummaries.length,
+    classSummaries,
+    studentSummaries,
+  };
 }
 
 function buildAdmissionNo() {
@@ -420,6 +594,17 @@ function normalizeFeeMonthInput(feeMonth, paymentDate) {
   return '';
 }
 
+async function ensureFeeMonthNotBeforeAdmission(studentId, feeMonth) {
+  const student = await get('SELECT id, admission_date FROM students WHERE id = ? LIMIT 1', [studentId]);
+  if (!student) {
+    throw new Error('Student not found');
+  }
+  const admissionMonth = feeMonthFromPaymentDate(student.admission_date || '');
+  if (admissionMonth && feeMonth < admissionMonth) {
+    throw new Error(`feeMonth must be >= admission month (${admissionMonth})`);
+  }
+}
+
 async function getSiblingGroupForStudent(student) {
   const parentKey = normalizeFamilyValue(student.parent_name);
   const phoneKey = normalizeFamilyValue(student.phone);
@@ -495,6 +680,7 @@ async function computeAutoFeeForStudent(studentId) {
     siblingCount,
     siblingPosition,
     className: student.class_name,
+    admissionDate: student.admission_date || '',
   };
 }
 
@@ -817,6 +1003,57 @@ app.post('/api/attendance', requireAuth, requireRole('Admin', 'Teacher'), async 
   }
 });
 
+app.post('/api/attendance/bulk', requireAuth, requireRole('Admin', 'Teacher'), async (req, res) => {
+  const attendanceDate = String(req.body.attendanceDate || '').trim();
+  const entries = Array.isArray(req.body.entries) ? req.body.entries : [];
+
+  if (!attendanceDate || !entries.length) {
+    return res.status(400).json({ error: 'attendanceDate and entries are required' });
+  }
+
+  try {
+    const savedRows = [];
+
+    for (const entry of entries) {
+      const studentId = Number(entry.studentId || 0);
+      const status = String(entry.status || '').trim();
+      const remarks = entry.remarks ? String(entry.remarks).trim() : '';
+
+      if (!studentId || !['Present', 'Absent', 'Late'].includes(status)) {
+        continue;
+      }
+
+      await run(
+        `INSERT INTO attendance (student_id, attendance_date, status, remarks)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT(student_id, attendance_date)
+         DO UPDATE SET status=excluded.status, remarks=excluded.remarks`,
+        [studentId, attendanceDate, status, remarks || null]
+      );
+
+      const row = await get(
+        `SELECT a.*, s.full_name, s.class_name, s.admission_no, s.phone, s.parent_name, s.section
+         FROM attendance a
+         JOIN students s ON s.id = a.student_id
+         WHERE a.student_id = ? AND a.attendance_date = ?`,
+        [studentId, attendanceDate]
+      );
+
+      if (row) {
+        savedRows.push(row);
+      }
+    }
+
+    return res.status(201).json({
+      success: true,
+      savedCount: savedRows.length,
+      rows: savedRows,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/attendance', requireAuth, async (req, res) => {
   try {
     const { attendanceDate } = req.query;
@@ -824,23 +1061,78 @@ app.get('/api/attendance', requireAuth, async (req, res) => {
     const date = attendanceDate || new Date().toISOString().slice(0, 10);
 
     let sql = `
-      SELECT a.*, s.full_name, s.class_name, s.admission_no, s.phone, s.parent_name, s.section
-      FROM attendance a
-      JOIN students s ON s.id = a.student_id
-      WHERE a.attendance_date = ?`;
-    const params = [date];
+      SELECT
+        a.id,
+        s.id AS student_id,
+        COALESCE(a.attendance_date, ?) AS attendance_date,
+        COALESCE(a.status, 'Not Marked') AS status,
+        a.remarks,
+        a.created_at,
+        s.full_name,
+        s.class_name,
+        s.admission_no,
+        s.phone,
+        s.parent_name,
+        s.section
+      FROM students s
+      LEFT JOIN attendance a
+        ON a.student_id = s.id
+       AND a.attendance_date = ?
+      WHERE s.admission_date <= ?`;
+    const params = [date, date, date];
 
     if (normalizedClass) {
       sql += ' AND s.class_name = ?';
       params.push(normalizedClass);
     }
 
-    sql += ' ORDER BY s.full_name';
+    sql += ' ORDER BY s.class_name, s.full_name';
 
     const rows = await all(sql, params);
     return res.json(rows);
   } catch (error) {
     return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/attendance/monthly-summary', requireAuth, async (req, res) => {
+  try {
+    const summary = await buildMonthlyAttendanceSummary({
+      month: req.query.month,
+      className: req.query.className,
+    });
+    return res.json(summary);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+app.post('/api/attendance/monthly-summary/save', requireAuth, requireRole('Admin', 'Teacher'), async (req, res) => {
+  try {
+    const monthKey = normalizeMonthKey(req.body.month);
+    const normalizedClass = normalizeClassName(req.body.className);
+    const html = String(req.body.html || '').trim();
+
+    if (!html) {
+      return res.status(400).json({ error: 'html content is required' });
+    }
+
+    const exportDir = path.join(__dirname, 'exports', 'attendance');
+    await fs.mkdir(exportDir, { recursive: true });
+
+    const safeClass = (normalizedClass || 'all_classes').replace(/[^\w-]+/g, '_');
+    const fileName = `attendance_monthly_${safeClass}_${monthKey}.html`;
+    const filePath = path.join(exportDir, fileName);
+    await fs.writeFile(filePath, html, 'utf8');
+
+    return res.json({
+      success: true,
+      fileName,
+      filePath,
+      message: 'Attendance monthly report file save ho gayi.',
+    });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
   }
 });
 
@@ -956,6 +1248,7 @@ app.post('/api/fees', requireAuth, requireRole('Admin'), async (req, res) => {
     if (!normalizedMonth) {
       return res.status(400).json({ error: 'feeMonth must be YYYY-MM (or provide paymentDate)' });
     }
+    await ensureFeeMonthNotBeforeAdmission(studentId, normalizedMonth);
     const existing = await get('SELECT id FROM fees WHERE student_id = ? AND fee_month = ? LIMIT 1', [studentId, normalizedMonth]);
 
     const feeInfo = await computeAutoFeeForStudent(Number(studentId));
@@ -1994,6 +2287,7 @@ app.put('/api/fees/:id', requireAuth, requireRole('Admin'), async (req, res) => 
     if (!normalizedMonth) {
       return res.status(400).json({ error: 'feeMonth must be YYYY-MM (or provide paymentDate)' });
     }
+    await ensureFeeMonthNotBeforeAdmission(parsedStudentId, normalizedMonth);
 
     const existing = await get('SELECT id FROM fees WHERE id = ?', [feeId]);
     if (!existing) return res.status(404).json({ error: 'Fee record not found' });
