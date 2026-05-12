@@ -657,7 +657,23 @@ function setClassOnSelect(selectEl, className) {
   selectEl.value = className;
 }
 
-function applyClassWorkspaceSelection(className) {
+function scrollToSelectedClassModule(className) {
+  const isAdmin = authUser?.role === 'Admin';
+  const target = document.getElementById(isAdmin ? 'admissions' : 'attendance');
+  const messageId = isAdmin ? 'admissionMsg' : 'attendanceMsg';
+
+  if (messageId) {
+    setMessage(messageId, `Class ${className} selected. Ab yahan entry karein.`, 'success');
+  }
+
+  if (target) {
+    window.setTimeout(() => {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  }
+}
+
+function applyClassWorkspaceSelection(className, options = {}) {
   selectedWorkspaceClass = className;
 
   setClassOnSelect(admissionForm?.elements.className, className);
@@ -684,6 +700,10 @@ function applyClassWorkspaceSelection(className) {
   document.querySelectorAll('.class-chip').forEach((chip) => {
     chip.classList.toggle('active', chip.dataset.className === className);
   });
+
+  if (options.scrollToModule) {
+    scrollToSelectedClassModule(className);
+  }
 }
 
 function renderClassColumns() {
@@ -707,12 +727,12 @@ function renderClassColumns() {
     chip.type = 'button';
     chip.className = 'class-chip';
     chip.dataset.className = className;
-    chip.innerHTML = `<strong>Class ${className}</strong><small>${studentCounts[className]} students</small>`;
+    chip.innerHTML = `<strong>Class ${className}</strong><small>${studentCounts[className]} students</small><span class="class-chip-action">Tap to open</span>`;
 
     if (selectedWorkspaceClass === className) chip.classList.add('active');
 
     chip.addEventListener('click', () => {
-      applyClassWorkspaceSelection(className);
+      applyClassWorkspaceSelection(className, { scrollToModule: true });
     });
 
     classColumns.appendChild(chip);
