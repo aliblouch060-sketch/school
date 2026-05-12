@@ -805,15 +805,16 @@ function safeUser(user) {
 }
 
 async function ensureDefaultAdmin() {
-  const username = process.env.ADMIN_USERNAME || 'admin';
-  const password = process.env.ADMIN_PASSWORD || 'admin123';
+  const useFallbackRecoveryAdmin = process.env.VERCEL && !dbState.isPostgres;
+  const username = useFallbackRecoveryAdmin ? 'admin' : process.env.ADMIN_USERNAME || 'admin';
+  const password = useFallbackRecoveryAdmin ? 'admin123' : process.env.ADMIN_PASSWORD || 'admin123';
   const passwordHash = await bcrypt.hash(password, 10);
   const adminExists = await get("SELECT id FROM users WHERE role = 'Admin' LIMIT 1");
 
   if (adminExists) {
-    if (process.env.VERCEL && !dbState.isPostgres) {
+    if (useFallbackRecoveryAdmin) {
       await run('UPDATE users SET username = ?, password_hash = ? WHERE id = ?', [username, passwordHash, adminExists.id]);
-      console.log('Fallback SQLite admin credentials refreshed from environment.');
+      console.log('Fallback SQLite admin credentials refreshed.');
     }
     return;
   }
