@@ -162,8 +162,14 @@ a {
 
 .brand-title {
   color: #f7fbf9;
-  margin-bottom: 6px;
-  font-size: 1.7rem;
+  margin-bottom: 8px;
+  font-size: clamp(2.1rem, 4vw, 4.35rem);
+  line-height: 0.95;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-shadow: 0 3px 16px rgba(2, 22, 18, 0.28);
+  max-width: 820px;
 }
 
 .brand-sub {
