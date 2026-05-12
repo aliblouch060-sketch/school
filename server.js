@@ -805,12 +805,18 @@ function safeUser(user) {
 }
 
 async function ensureDefaultAdmin() {
-  const adminExists = await get("SELECT id FROM users WHERE role = 'Admin' LIMIT 1");
-  if (adminExists) return;
-
   const username = process.env.ADMIN_USERNAME || 'admin';
   const password = process.env.ADMIN_PASSWORD || 'admin123';
   const passwordHash = await bcrypt.hash(password, 10);
+  const adminExists = await get("SELECT id FROM users WHERE role = 'Admin' LIMIT 1");
+
+  if (adminExists) {
+    if (process.env.VERCEL && !dbState.isPostgres) {
+      await run('UPDATE users SET username = ?, password_hash = ? WHERE id = ?', [username, passwordHash, adminExists.id]);
+      console.log('Fallback SQLite admin credentials refreshed from environment.');
+    }
+    return;
+  }
 
   await run('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)', [username, passwordHash, 'Admin']);
 
