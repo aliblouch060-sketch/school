@@ -937,6 +937,50 @@ app.post('/api/auth/users', requireAuth, requireRole('Admin'), async (req, res) 
   }
 });
 
+app.post('/api/admin/import-data', requireAuth, requireRole('Admin'), async (req, res) => {
+  const importTables = [
+    { name: 'students', columns: ['id', 'admission_no', 'full_name', 'class_name', 'section', 'gender', 'dob', 'b_form_no', 'parent_name', 'phone', 'address', 'admission_date', 'created_at', 'fee_discount'] },
+    { name: 'attendance', columns: ['id', 'student_id', 'attendance_date', 'status', 'remarks', 'created_at'] },
+    { name: 'results', columns: ['id', 'student_id', 'exam_name', 'subject', 'max_marks', 'obtained_marks', 'grade', 'remarks', 'created_at'] },
+    { name: 'result_subject_templates', columns: ['id', 'class_name', 'subject', 'max_marks', 'sort_order', 'created_at'] },
+    { name: 'syllabus_templates', columns: ['id', 'class_name', 'subject', 'title', 'body', 'created_at'] },
+    { name: 'fees', columns: ['id', 'student_id', 'fee_month', 'total_amount', 'paid_amount', 'due_amount', 'payment_date', 'payment_mode', 'remarks', 'created_at'] },
+    { name: 'notices', columns: ['id', 'title', 'body', 'audience', 'publish_date', 'created_at'] },
+    { name: 'timetable', columns: ['id', 'class_name', 'section', 'weekday', 'period_name', 'subject', 'teacher_name', 'start_time', 'end_time', 'created_at'] },
+    { name: 'expenses', columns: ['id', 'expense_date', 'category', 'amount', 'payment_mode', 'remarks', 'created_at'] },
+  ];
+
+  const payload = req.body || {};
+  const summary = {};
+
+  try {
+    for (const table of importTables) {
+      const rows = Array.isArray(payload[table.name]) ? payload[table.name] : [];
+      summary[table.name] = rows.length;
+      if (!rows.length) continue;
+
+      const placeholders = table.columns.map(() => '?').join(', ');
+      const updateColumns = table.columns
+        .filter((column) => column !== 'id')
+        .map((column) => `${column} = excluded.${column}`)
+        .join(', ');
+      const sql = `
+        INSERT INTO ${table.name} (${table.columns.join(', ')})
+        VALUES (${placeholders})
+        ON CONFLICT(id) DO UPDATE SET ${updateColumns}
+      `;
+
+      for (const row of rows) {
+        await run(sql, table.columns.map((column) => row[column] ?? null));
+      }
+    }
+
+    return res.json({ ok: true, imported: summary });
+  } catch (error) {
+    return res.status(500).json({ error: error.message, imported: summary });
+  }
+});
+
 app.get('/api/dashboard', requireAuth, async (req, res) => {
   try {
     const students = await get('SELECT COUNT(*) AS count FROM students');
