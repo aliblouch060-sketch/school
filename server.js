@@ -7,7 +7,8 @@ const { spawn } = require('child_process');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const webPush = require('web-push');
-const { initDb, run, get, all, isPostgres } = require('./db');
+const dbState = require('./db');
+const { initDb, run, get, all } = dbState;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -107,7 +108,10 @@ function ensureAppReady() {
   if (!startupPromise) {
     startupPromise = initDb()
       .then(() => ensureDefaultAdmin())
-      .then(() => ensureWebPushConfigured());
+      .then(() => ensureWebPushConfigured())
+      .then(() => ensureMonthlyFeeAutomation().catch((error) => {
+        console.error('Auto monthly fee generation failed:', error.message);
+      }));
   }
   return startupPromise;
 }
@@ -417,7 +421,7 @@ async function getAppSetting(key, defaultValue = null) {
 async function setAppSetting(key, value) {
   const settingKey = String(key);
   const settingValue = String(value ?? '');
-  if (isPostgres) {
+  if (dbState.isPostgres) {
     await all(
       `INSERT INTO app_settings (key, value, updated_at)
        VALUES (?, ?, CURRENT_TIMESTAMP)
@@ -741,6 +745,52 @@ async function autoGenerateFeesForMonth({ feeMonth, className = null, paymentDat
   };
 }
 
+let monthlyFeeAutomationStarted = false;
+
+async function ensureCurrentMonthFeesGenerated() {
+  const feeMonth = getCurrentFeeMonthKey();
+  const summary = await autoGenerateFeesForMonth({
+    feeMonth,
+    remarks: 'Auto monthly fee generated',
+  });
+
+  await setAppSetting(
+    'monthly_fee_auto_generation_last_run',
+    JSON.stringify({
+      feeMonth,
+      createdCount: summary.createdCount,
+      skippedCount: summary.skippedCount,
+      totalStudents: summary.totalStudents,
+      ranAt: new Date().toISOString(),
+    })
+  );
+
+  if (summary.createdCount > 0) {
+    console.log(`Auto monthly fees generated for ${feeMonth}. Created: ${summary.createdCount}, skipped: ${summary.skippedCount}.`);
+  }
+
+  return summary;
+}
+
+async function ensureMonthlyFeeAutomation() {
+  const summary = await ensureCurrentMonthFeesGenerated();
+
+  if (!monthlyFeeAutomationStarted) {
+    monthlyFeeAutomationStarted = true;
+    const interval = setInterval(() => {
+      ensureCurrentMonthFeesGenerated().catch((error) => {
+        console.error('Auto monthly fee generation failed:', error.message);
+      });
+    }, 6 * 60 * 60 * 1000);
+
+    if (typeof interval.unref === 'function') {
+      interval.unref();
+    }
+  }
+
+  return summary;
+}
+
 function signToken(user) {
   return jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, JWT_SIGN_OPTIONS);
 }
@@ -803,7 +853,7 @@ function requireRole(...roles) {
 }
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, message: 'School management API running', database: isPostgres ? 'postgres' : 'sqlite' });
+  res.json({ ok: true, message: 'School management API running', database: dbState.isPostgres ? 'postgres' : 'sqlite' });
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -1668,6 +1718,46 @@ app.get('/api/expenses', requireAuth, requireRole('Admin'), async (req, res) => 
   }
 });
 
+app.put('/api/expenses/:id', requireAuth, requireRole('Admin'), async (req, res) => {
+  const id = Number(req.params.id);
+  const { expenseDate, category, amount, paymentMode, remarks } = req.body || {};
+  const normalizedDate = String(expenseDate || '').trim();
+  const normalizedCategory = String(category || '').trim();
+  const numericAmount = Number(amount);
+
+  if (!id) {
+    return res.status(400).json({ error: 'valid expense id is required' });
+  }
+  if (!isValidDateInput(normalizedDate)) {
+    return res.status(400).json({ error: 'expenseDate must be YYYY-MM-DD' });
+  }
+  if (!normalizedCategory) {
+    return res.status(400).json({ error: 'category is required' });
+  }
+  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+    return res.status(400).json({ error: 'amount must be a positive number' });
+  }
+
+  try {
+    const existing = await get('SELECT id FROM expenses WHERE id = ?', [id]);
+    if (!existing) {
+      return res.status(404).json({ error: 'Expense not found' });
+    }
+
+    await run(
+      `UPDATE expenses
+       SET expense_date = ?, category = ?, amount = ?, payment_mode = ?, remarks = ?
+       WHERE id = ?`,
+      [normalizedDate, normalizedCategory, numericAmount, paymentMode || null, remarks || null, id]
+    );
+
+    const row = await get('SELECT * FROM expenses WHERE id = ?', [id]);
+    return res.json(row);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/expenses/summary', requireAuth, requireRole('Admin'), async (req, res) => {
   try {
     const month = normalizeMonthInput(req.query.month) || getCurrentFeeMonthKey();
@@ -2426,6 +2516,18 @@ app.put('/api/timetable/:id', requireAuth, requireRole('Admin'), async (req, res
 
     const row = await get('SELECT * FROM timetable WHERE id = ?', [timetableId]);
     return res.json(row);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/expenses/:id', requireAuth, requireRole('Admin'), async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: 'valid expense id is required' });
+
+  try {
+    await run('DELETE FROM expenses WHERE id = ?', [id]);
+    return res.json({ success: true });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

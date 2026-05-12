@@ -1,13 +1,12 @@
 require('./load-env');
 
 const path = require('path');
+const os = require('os');
 const sqlite3 = require('sqlite3').verbose();
 const { Pool } = require('pg');
 
-const dbPath = process.env.VERCEL && !process.env.DATABASE_URL
-  ? '/tmp/school.db'
-  : path.join(__dirname, 'school.db');
-const isPostgres = Boolean(process.env.DATABASE_URL);
+const dbPath = process.env.VERCEL ? path.join(os.tmpdir(), 'school.db') : path.join(__dirname, 'school.db');
+let isPostgres = Boolean(process.env.DATABASE_URL);
 
 let sqliteDb;
 let pgPool;
@@ -18,6 +17,18 @@ if (isPostgres) {
     ssl: process.env.PGSSL === 'false' ? false : { rejectUnauthorized: false },
   });
 } else {
+  sqliteDb = new sqlite3.Database(dbPath);
+}
+
+function switchToSqliteFallback(error) {
+  if (!isPostgres) return;
+
+  console.error('PostgreSQL unavailable, falling back to SQLite:', error.message);
+  isPostgres = false;
+  if (pgPool) {
+    pgPool.end().catch(() => {});
+    pgPool = null;
+  }
   sqliteDb = new sqlite3.Database(dbPath);
 }
 
@@ -423,7 +434,15 @@ async function initPostgres() {
 
 async function initDb() {
   if (isPostgres) {
-    await initPostgres();
+    try {
+      await initPostgres();
+    } catch (error) {
+      if (!process.env.VERCEL) {
+        throw error;
+      }
+      switchToSqliteFallback(error);
+      await initSqlite();
+    }
   } else {
     await initSqlite();
   }
@@ -438,5 +457,9 @@ module.exports = {
   get,
   all,
   initDb,
-  isPostgres,
 };
+
+Object.defineProperty(module.exports, 'isPostgres', {
+  enumerable: true,
+  get: () => isPostgres,
+});
