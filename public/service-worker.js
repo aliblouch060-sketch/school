@@ -1,5 +1,5 @@
-const STATIC_CACHE_NAME = 'school-app-static-v5';
-const RUNTIME_CACHE_NAME = 'school-app-runtime-v5';
+const STATIC_CACHE_NAME = 'school-app-static-v9';
+const RUNTIME_CACHE_NAME = 'school-app-runtime-v9';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',

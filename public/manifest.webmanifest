@@ -1,6 +1,6 @@
 {
-  "name": "The Scholar Kids School Portal",
-  "short_name": "School Portal",
+  "name": "The Scholar Kids Academy Portal",
+  "short_name": "SK Academy",
   "description": "Private school staff portal for admissions, attendance, results, fees and notices",
   "start_url": "/#portal",
   "scope": "/",
@@ -20,5 +20,6 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "id": "/?app=sk-academy-portal"
 }
